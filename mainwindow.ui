@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>726</width>
+    <height>674</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>UCL Study Manager</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="icons.qrc">
+    <normaloff>:/data/ucl-study-manager.png</normaloff>:/data/ucl-study-manager.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QWebView" name="webView">
+      <property name="url">
+       <url>
+        <string>https://study.cs.ucl.ac.uk/multitasking/web/a/login</string>
+       </url>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="mainToolBar">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="windowTitle">
+    <string>Study Toolbar</string>
+   </property>
+   <property name="accessibleName">
+    <string>Study Toolbar</string>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonIconOnly</enum>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionCurrentProgress"/>
+   <addaction name="actionUploadData"/>
+   <addaction name="actionActivityJournal"/>
+   <addaction name="actionActivityLogManager"/>
+   <addaction name="separator"/>
+   <addaction name="actionContact"/>
+   <addaction name="actionInformationSheet"/>
+  </widget>
+  <action name="actionCurrentProgress">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/data/check-status-32.png</normaloff>:/data/check-status-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>Current Progress</string>
+   </property>
+   <property name="toolTip">
+    <string>View your progress into the study</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actionUploadData">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/data/data-upload-32.png</normaloff>
+     <normalon>:/data/package-upgrade.png</normalon>:/data/data-upload-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>Upload Data</string>
+   </property>
+   <property name="toolTip">
+    <string>Upload the collected data</string>
+   </property>
+  </action>
+  <action name="actionInformationSheet">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/data/help-info-32.png</normaloff>:/data/help-info-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>Information Sheet</string>
+   </property>
+   <property name="toolTip">
+    <string>Read the information sheet</string>
+   </property>
+  </action>
+  <action name="actionContact">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/data/contact-32.png</normaloff>
+     <normalon>:/data/mail-message-new.png</normalon>:/data/contact-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>Contact</string>
+   </property>
+   <property name="toolTip">
+    <string>Contact the researchers</string>
+   </property>
+  </action>
+  <action name="actionActivityLogManager">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/data/activity-log-manager-32.png</normaloff>:/data/activity-log-manager-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open UCL Study Privacy Settings</string>
+   </property>
+  </action>
+  <action name="actionActivityJournal">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/data/activity-journal-32.png</normaloff>:/data/activity-journal-32.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open UCL Study Journal</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Activity Journal</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QWebView</class>
+   <extends>QWidget</extends>
+   <header>QtWebKitWidgets/QWebView</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>

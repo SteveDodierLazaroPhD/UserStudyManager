@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/">
+        <file>data/check-status-24.png</file>
+        <file>data/contact-24.png</file>
+        <file>data/contact-32.png</file>
+        <file>data/data-upload-24.png</file>
+        <file>data/data-upload-32.png</file>
+        <file>data/exit-24.png</file>
+        <file>data/exit-32.png</file>
+        <file>data/ucl-logo.png</file>
+        <file>data/help-info-24.png</file>
+        <file>data/help-info-32.png</file>
+        <file>data/check-status-32.png</file>
+        <file>data/activity-journal-24.png</file>
+        <file>data/activity-journal-32.png</file>
+        <file>data/activity-log-manager-24.png</file>
+        <file>data/activity-log-manager-32.png</file>
+        <file>data/ucl-study-manager.png</file>
+    </qresource>
+</RCC>
