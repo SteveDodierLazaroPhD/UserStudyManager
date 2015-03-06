@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "uclwebmanager.h"
 
 namespace Ui {
 class MainWindow;
@@ -17,12 +18,11 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    UCLWebManager *nm;
 
-private slots:
-    void onCurrentProgress();
-    void onUpload();
-    void onInformation();
-    void onContact();
+protected slots:
+    void onPageLoadStarted();
+    void onPageLoaded(const bool);
 };
 
 #endif // MAINWINDOW_H
