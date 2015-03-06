@@ -13,10 +13,19 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    participant.cpp \
+    part.cpp \
+    step.cpp \
+    study.cpp \
+    uclwebmanager.cpp
 
 HEADERS  += mainwindow.h \
-    study.h
+    study.h \
+    participant.h \
+    part.h \
+    step.h \
+    uclwebmanager.h
 
 FORMS    += mainwindow.ui
 
