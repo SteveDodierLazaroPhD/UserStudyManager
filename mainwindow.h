@@ -21,6 +21,9 @@ private:
     UCLWebManager *nm;
 
 protected slots:
+    void launchProcess(const QString &name) const;
+    void launchActivityJournal() const;
+    void launchActivityLogManager() const;
     void onPageLoadStarted();
     void onPageLoaded(const bool);
 };
