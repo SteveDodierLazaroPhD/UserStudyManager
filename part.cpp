@@ -49,7 +49,7 @@ bool Part::isValid() const
             && this->id <= Part::maxPartId;
 }
 
-int Part::i() const
+int Part::toString() const
 {
     return id;
 }

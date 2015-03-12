@@ -25,7 +25,7 @@ private:
     ~Part();
 
     bool isValid() const;
-    int i() const;
+    int toString() const;
 
     bool operator <=(Part const& b);
     bool operator >=(Part const& b);

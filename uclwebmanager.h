@@ -3,6 +3,7 @@
 
 #include <QWebView>
 #include <QObject>
+#include <QList>
 
 class UCLWebManager : public QWebView
 {
@@ -11,7 +12,6 @@ class UCLWebManager : public QWebView
 public:
     explicit UCLWebManager(QWidget *parent = 0);
     ~UCLWebManager();
-    void openDesktopUrl(const QUrl &url);
 
     void setUrl(const QUrl &url);
     void load(const QUrl &url);
@@ -19,16 +19,39 @@ public:
               QNetworkAccessManager::Operation operation = QNetworkAccessManager::GetOperation,
               const QByteArray &body = QByteArray());
 
+protected:
+    QList<QUrl> getCurrentPageInternalLinks() const;
+    QList<QUrl> getCurrentPageExternalLinks() const;
+    QList<QUrl> getCurrentPageSubmits() const;
+
+
+    QString getUrlAppId(const QUrl &url);
+    QString getUrlRouteName(const QUrl &url);
+
 signals:
     void loggedIn(bool);
 
 protected slots:
-    void onUrlChange(const QUrl &url);
+    /**
+     * @brief onLinkClicked Dispatches clicked urls to the controller or to an outside Web browser
+     * @param url the url that has been clicked
+     */
     void onLinkClicked(const QUrl &url);
-    void onLoggedIn(const bool success);
+
+    /**
+     * @brief onPageLoaded Dispatches locally loaded pages to controllers that will process their content and modify the UI to display something to the user
+     * @param success whether the current page was successfully loaded or not
+     */
+    void onPageLoaded(const bool success);
+    void onUrlChange(const QUrl &url);
+
+    void onLoggedIn();
+    void onFailedLogin() const;
 
 public slots:
+    void openDesktopUrl(const QUrl &url);
     bool loadLoginPage();
+    bool loadInfoPage();
     bool loadContactPage();
 };
 

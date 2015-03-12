@@ -1,7 +1,7 @@
 #ifndef STUDY_H
 #define STUDY_H
 
-#include "part.h"
+#include "participant.h"
 #include "step.h"
 #include <QString>
 
@@ -10,39 +10,39 @@
 
 #define HOSTNAME        "https://study.cs.ucl.ac.uk/"
 #define STUDY_FOLDER    STUDY_ID"/"
-#define WEB_APP_FOLDER  "web/a/"
-#define URL_BASE        HOSTNAME STUDY_FOLDER WEB_APP_FOLDER
+#define WEB_FOLDER      "web/"
+#define APP_FOLDER      "web/a/"
+#define APP_BASE        HOSTNAME STUDY_FOLDER APP_FOLDER
+#define WEB_BASE        HOSTNAME STUDY_FOLDER WEB_FOLDER
 
 class StudyUtils {
 private:
-    QString studyId;
-    QString appId;
+    Participant *participant;
     bool loggedIn;
     short maxPart;
 
     static StudyUtils *instance;
     explicit StudyUtils();
+    ~StudyUtils();
 
 public:
     void setMaxPart(const short part);
-    inline void setLoggedIn(const bool status)
-        { loggedIn = status; }
+    void login(const QString &username, const QString &email, bool status);
 
-    inline QString getStudyId() const
-        { return studyId; }
-    inline QString getAppId() const
-        { return appId; }
     inline bool getLoggedIn() const
         { return loggedIn; }
     inline short getMaxPart() const
         { return maxPart; }
+    inline Participant *getParticipant() const
+        { return participant; }
 
     static StudyUtils *getUtils();
     static void clearUtils();
 
-    QString setParticipantIdentity(const QString &email);
-    //QString buildStudyURI(const Part &part, const Step &step);
-    //QString buildStudyURI(const Part &part, const QString &customUri);
+    static bool isAppId(const QString &string);
+    static inline QString getStudyId()
+        { return STUDY_ID; }
+
 };
 
 #endif // STUDY_H
