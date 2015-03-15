@@ -45,6 +45,7 @@ public:
     static const Step PRIMARY_TASK;
     static const Step RUNNING;
     static const Step UPLOAD;
+    static const Step JSON_UPLOAD;
     static const Step DEBRIEFING;
     static const Step DONE;
 };

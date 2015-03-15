@@ -9,6 +9,7 @@ const Step Step::START("start");
 const Step Step::PRIMARY_TASK("primary_task");
 const Step Step::RUNNING("running");
 const Step Step::UPLOAD("upload");
+const Step Step::UPLOAD("json_upload");
 const Step Step::DEBRIEFING("debriefing");
 const Step Step::DONE("done");
 
