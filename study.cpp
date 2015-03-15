@@ -9,9 +9,22 @@ StudyUtils *StudyUtils::instance = NULL;
 StudyUtils::StudyUtils() :
     participant(NULL),
     loggedIn(false),
-    maxPart(PART_COUNT)
+    maxPart(PART_COUNT),
+    stepOrder()
 {
     setMaxPart(PART_COUNT);
+    stepOrder.append(Step::INVALID);
+    stepOrder.append(Step::WAITING_ENROLLMENT);
+    stepOrder.append(Step::CONSENT);
+    stepOrder.append(Step::BRIEFING);
+    stepOrder.append(Step::START);
+    stepOrder.append(Step::PRIMARY_TASK);
+    stepOrder.append(Step::RUNNING);
+    stepOrder.append(Step::UPLOAD);
+    stepOrder.append(Step::DEBRIEFING);
+    stepOrder.append(Step::DONE);
+
+    participant = new Participant();
 }
 
 StudyUtils::~StudyUtils()
@@ -26,18 +39,14 @@ void StudyUtils::setMaxPart(const short part)
     Part::setMaxPart(maxPart);
 }
 
-void StudyUtils::login(const QString &username, const QString &email, bool status)
+void StudyUtils::loginFinalize(bool status)
 {
     loggedIn = status;
     cout << "New login status: " << (loggedIn? "logged in" : "logged out") << endl;
 
     if (loggedIn)
     {
-        if (participant)
-            delete participant;
-        participant = new Participant();
-        participant->login(username, email);
-        cout << "Logged in as " << qPrintable(username) << " (email " << qPrintable(email) << ")." << endl;
+        cout << "Logged in as " << qPrintable(participant->getUsername()) << " (email " << qPrintable(participant->getEmail()) << ")." << endl;
     }
 }
 

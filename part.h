@@ -1,6 +1,7 @@
 #ifndef PART_H
 #define PART_H
 
+#include <QString>
 
 class Part
 {
@@ -25,7 +26,8 @@ private:
     ~Part();
 
     bool isValid() const;
-    int toString() const;
+    int getId() const;
+    QString toString() const;
 
     bool operator <=(Part const& b);
     bool operator >=(Part const& b);

@@ -4,6 +4,7 @@
 #include "participant.h"
 #include "step.h"
 #include <QString>
+#include<QList>
 
 #define PART_COUNT 2
 #define STUDY_ID        "multitasking"
@@ -20,6 +21,7 @@ private:
     Participant *participant;
     bool loggedIn;
     short maxPart;
+    QList<Step> stepOrder;
 
     static StudyUtils *instance;
     explicit StudyUtils();
@@ -27,7 +29,7 @@ private:
 
 public:
     void setMaxPart(const short part);
-    void login(const QString &username, const QString &email, bool status);
+    void loginFinalize(bool status);
 
     inline bool getLoggedIn() const
         { return loggedIn; }
@@ -35,6 +37,8 @@ public:
         { return maxPart; }
     inline Participant *getParticipant() const
         { return participant; }
+    inline const QList<Step> &getStepOrder() const
+        { return stepOrder; }
 
     static StudyUtils *getUtils();
     static void clearUtils();

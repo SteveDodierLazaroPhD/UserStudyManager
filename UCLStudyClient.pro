@@ -18,14 +18,16 @@ SOURCES += main.cpp\
     part.cpp \
     step.cpp \
     study.cpp \
-    uclwebmanager.cpp
+    uclwebmanager.cpp \
+    uclnetqueries.cpp
 
 HEADERS  += mainwindow.h \
     study.h \
     participant.h \
     part.h \
     step.h \
-    uclwebmanager.h
+    uclwebmanager.h \
+    uclnetqueries.h
 
 FORMS    += mainwindow.ui
 

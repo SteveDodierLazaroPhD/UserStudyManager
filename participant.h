@@ -15,12 +15,15 @@ class Participant : public QObject
     QString username;
     QString email;
     QString appId;
+    bool loggedIn;
     Part currentPart;
     Step currentStep;
 
 public:
     explicit Participant(QObject *parent = 0);
     ~Participant();
+
+    bool updateFromJson(const QString &str);
 
     bool isLoggedIn() const;
     const QString &getUsername() const;
@@ -29,10 +32,10 @@ public:
     const Part &getPart() const;
     const Step &getStep() const;
 
-    void updateStatus();
 
 protected:
     void login(const QString &username, const QString &email);
+    void logout();
 
 signals:
 

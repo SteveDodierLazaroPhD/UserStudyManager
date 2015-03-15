@@ -49,9 +49,14 @@ bool Part::isValid() const
             && this->id <= Part::maxPartId;
 }
 
-int Part::toString() const
+int Part::getId() const
 {
     return id;
+}
+
+QString Part::toString() const
+{
+    return QString::number(id);
 }
 
 void Part::setMaxPart(short maxPart)

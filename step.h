@@ -1,10 +1,15 @@
 #ifndef STEP_H
 #define STEP_H
 
+#include <QString>
 
 class Step
 {
-private:
+protected:
+    /**
+     * @brief name Name of the #Step, used to communicate with the server
+     */
+    QString name;
     /**
      * @brief stepOrder
      * Steps are ordered based on this identifier. The app will compare a #Step to
@@ -12,11 +17,18 @@ private:
      * the default steps if you want, but must ensure they map the order encoded
      * in your corresponding Web server.
      */
-    short stepOrder;
+//    short stepOrder;
 
 public:
-    Step(short stepOrder);
+//    Step(const QString &name, short stepOrder);
+//    Step(short stepOrder);
+    Step(const QString &name = QString());
     ~Step();
+
+    inline QString getName() const
+        { return name; }
+
+    Step &operator = (Step const& other);
 
     bool operator <=(Step const& b);
     bool operator >=(Step const& b);
@@ -25,6 +37,7 @@ public:
     bool operator <(Step const& b);
     bool operator >(Step const& b);
 
+    static const Step INVALID;
     static const Step WAITING_ENROLLMENT;
     static const Step CONSENT;
     static const Step BRIEFING;
@@ -34,7 +47,6 @@ public:
     static const Step UPLOAD;
     static const Step DEBRIEFING;
     static const Step DONE;
-    static const Step INVALID;
 };
 
 #endif // STEP_H

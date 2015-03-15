@@ -248,7 +248,7 @@ void UCLWebManager::onPageLoaded(const bool success)
     /* Authenticated pages */
     else
     {
-
+        //TODO updateParticipant
         {
             cerr << "Unknown page loaded. App id: " << qPrintable(appId) << "\tRoute: " << qPrintable(route) << endl;
         }
@@ -265,25 +265,38 @@ void UCLWebManager::onLoggedIn()
 {
     StudyUtils         *inst  = StudyUtils::getUtils();
     QString             str   = this->page()->mainFrame()->toPlainText();
-    QByteArray          raw   = str.toLocal8Bit();
-    QJsonParseError     error;
-    QJsonDocument       doc   = QJsonDocument::fromJson(raw, &error);
+//    QByteArray          raw   = str.toLocal8Bit();
+//    QJsonParseError     error;
+//    QJsonDocument       doc   = QJsonDocument::fromJson(raw, &error);
 
-    if (error.error != QJsonParseError::NoError)
-    {
-        cerr << "Could not parse parameters returned by server after logging in (source \"" << qPrintable(str) << "\"; error \""<< qPrintable(error.errorString()) <<"\")." << endl;
-        //TODO flush session, error occurred
-        return;
-    }
-    else
-    {
-        QJsonObject arr = doc.object()["LoggedIn"].toObject();
-        QString username = arr["Username"].toString();
-        QString email = arr["Email"].toString();
+//    if (error.error != QJsonParseError::NoError)
+//    {
+//        cerr << "Could not parse parameters returned by server after logging in (source \"" << qPrintable(str) << "\"; error \""<< qPrintable(error.errorString()) <<"\")." << endl;
+//        //TODO flush session, error occurred
+//        return;
+//    }
+//    else
+//    {
+//        QJsonObject arr = doc.object()["LoggedIn"].toObject();
+//        QString username = arr["Username"].toString();
+//        QString email = arr["Email"].toString();
 
-        inst->login(username, email, true);
-        this->loadContactPage(); //TODO CHANGE THIS
-    }
+        Participant *p = inst->getParticipant();
+        if (p)
+        {
+            bool worked = p->updateFromJson(str);
+            if (worked)
+            {
+                inst->loginFinalize(true);
+                this->loadContactPage(); //TODO CHANGE THIS
+            }
+            else
+            {
+                cerr << "An error occurred when parsing the server's response, could not login." << endl;
+            }
+        }
+
+//    }
 
 
 //TODO    inst->login(true);
@@ -292,7 +305,7 @@ void UCLWebManager::onLoggedIn()
 void UCLWebManager::onFailedLogin() const
 {
     StudyUtils         *inst  = StudyUtils::getUtils();
-    inst->login("", "", false);
+    inst->loginFinalize(false);
 }
 
 bool UCLWebManager::loadLoginPage()
@@ -311,7 +324,7 @@ bool UCLWebManager::loadInfoPage()
         const QString &id = p->getIdentity();
         const Part &part = p->getPart();
         QString target(APP_BASE);
-        target+= "/"+id+"/"+part.toString()+"/"+"information";
+        target+= id+"/"+part.toString()+"/information";
         onLinkClicked(target);
     }
     else
