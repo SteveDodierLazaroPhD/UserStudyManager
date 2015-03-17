@@ -16,27 +16,27 @@ Part::~Part()
 
 }
 
-bool Part::operator <=(Part const& b)
+bool Part::operator <=(Part const& b) const
 {
     return this->id <= b.id;
 }
-bool Part::operator >=(Part const& b)
+bool Part::operator >=(Part const& b) const
 {
     return this->id >= b.id;
 }
-bool Part::operator ==(Part const& b)
+bool Part::operator ==(Part const& b) const
 {
     return this->id == b.id;
 }
-bool Part::operator !=(Part const& b)
+bool Part::operator !=(Part const& b) const
 {
     return this->id != b.id;
 }
-bool Part::operator <(Part const& b)
+bool Part::operator <(Part const& b) const
 {
     return this->id < b.id;
 }
-bool Part::operator >(Part const& b)
+bool Part::operator >(Part const& b) const
 {
     return this->id > b.id;
 }

@@ -19,7 +19,7 @@ SOURCES += main.cpp\
     step.cpp \
     study.cpp \
     uclwebmanager.cpp \
-    uclnetqueries.cpp
+    ucluploadmanager.cpp
 
 HEADERS  += mainwindow.h \
     study.h \
@@ -27,7 +27,7 @@ HEADERS  += mainwindow.h \
     part.h \
     step.h \
     uclwebmanager.h \
-    uclnetqueries.h
+    ucluploadmanager.h
 
 FORMS    += mainwindow.ui
 

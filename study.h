@@ -4,7 +4,8 @@
 #include "participant.h"
 #include "step.h"
 #include <QString>
-#include<QList>
+#include <QObject>
+#include <QList>
 
 #define PART_COUNT 2
 #define STUDY_ID        "multitasking"
@@ -16,7 +17,12 @@
 #define APP_BASE        HOSTNAME STUDY_FOLDER APP_FOLDER
 #define WEB_BASE        HOSTNAME STUDY_FOLDER WEB_FOLDER
 
-class StudyUtils {
+#define APPS_SCHEME     "app"
+
+class StudyUtils : public QObject
+{
+    Q_OBJECT
+
 private:
     Participant *participant;
     bool loggedIn;
@@ -31,7 +37,7 @@ public:
     void setMaxPart(const short part);
     void loginFinalize(bool status);
 
-    inline bool getLoggedIn() const
+    inline bool isLoggedIn() const
         { return loggedIn; }
     inline short getMaxPart() const
         { return maxPart; }
@@ -44,9 +50,15 @@ public:
     static void clearUtils();
 
     static bool isAppId(const QString &string);
+    static bool isPart(const QString &string);
+    static QString getUrlAppId(const QUrl &url);
+    static QString getUrlRouteName(const QUrl &url);
+
     static inline QString getStudyId()
         { return STUDY_ID; }
 
+signals:
+    void onLoginStatusChanged(bool);
 };
 
 #endif // STUDY_H

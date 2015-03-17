@@ -29,12 +29,12 @@ private:
     int getId() const;
     QString toString() const;
 
-    bool operator <=(Part const& b);
-    bool operator >=(Part const& b);
-    bool operator ==(Part const& b);
-    bool operator !=(Part const& b);
-    bool operator <(Part const& b);
-    bool operator >(Part const& b);
+    bool operator <=(Part const& b) const;
+    bool operator >=(Part const& b) const;
+    bool operator ==(Part const& b) const;
+    bool operator !=(Part const& b) const;
+    bool operator <(Part const& b) const;
+    bool operator >(Part const& b) const;
 
     static void setMaxPart(short maxPart);
 
