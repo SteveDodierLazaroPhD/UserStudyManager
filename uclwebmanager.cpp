@@ -208,70 +208,43 @@ void UCLWebManager::showPageForStep(const Participant *p)
 
 void UCLWebManager::onPageLoaded(const bool success)
 {
-//    StudyUtils *inst = StudyUtils::getUtils();
+    /* Route to correct handler */
+    QString route = StudyUtils::getUrlRouteName(this->url());
 
     if (!success)
     {
-        qDebug() << "Failed to load page";
+        qDebug() << "Failed to load page '" << qPrintable(this->url().toDisplayString()) << "'." << endl;
         return;
     }
 
     /* General page setup */
     this->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
 
-    /* Route to correct handler */
-    QString appId = StudyUtils::getUrlAppId(this->url());
-    QString route = StudyUtils::getUrlRouteName(this->url());
-
-    /* Unauthenticated pages */
-    if (appId.isEmpty())
+    /* Authentication succeeded */
+    if (route == "logged_in")
     {
-        /* Authentication succeeded */
-        if (route == "logged_in")
-        {
-            this->onLoggedIn();
-        }
-        /* Authentication failed, mark us logged out */
-        else if (route == "login")
-        {
-            this->onFailedLogin();
-        }
-        /* Contact page can legitimately be embedded within the app */
-        else if (route == "contact")
-        {
-        }
-        /* Other pages have not been adapted for in-app embedding, should not be displayed */
-        else
-        {
-            cerr << "Unknown page loaded. App id: " << qPrintable(appId) << "\tRoute: " << qPrintable(route) << endl;
-        }
+        this->onLoggedIn();
     }
-    /* Authenticated pages */
+    /* Authentication failed, mark us logged out */
+    else if (route == "login")
+    {
+        this->onFailedLogin();
+    }
+    /* The status page instructs us to display local information corresponding to the user's current part and step */
+    if (route == "status")
+    {
+        this->onStatus();
+    }
+    /* Some pages can legitimately be embedded within the app */
+    else if (route == "contact" || route == "upload")
+    {
+    }
+    /* Other pages have not been adapted for in-app embedding, should not be displayed */
     else
     {
-        /* The status page instructs us to display local information corresponding to the user's current part and step */
-        if (route == "status")
-        {
-            this->onStatus();
-        }
-        else if (route == "upload")
-        {
-            //TODO connect the upload handler to clicks
-        }
-        else if (route == "information")
-        {
-        }
-        else
-        {
-            cerr << "Unknown page loaded. App id: " << qPrintable(appId) << "\tRoute: " << qPrintable(route) << endl;
-        }
+        cerr << "Unknown page '"<< qPrintable(this->url().toDisplayString()) <<"' loaded.\tRoute: " << qPrintable(route) << endl;
+        //TODO actually manage the errors
     }
-
-
-//    QList<QUrl> internals = getCurrentPageInternalLinks(); //TODO if url was on current page LINKS, then desktop
-//    QList<QUrl> externals = getCurrentPageExternalLinks(); //TODO if url was on current page LINKS, then desktop
-//    QList<QUrl> submits = getCurrentPageSubmits(); //TODO if url was on current page LINKS, then desktop
-    // if on INPUTS, then not desktop but load()...
 }
 
 void UCLWebManager::onUnsupportedStepQueried()
@@ -342,10 +315,9 @@ bool UCLWebManager::loadInfoPage()
 
     if (p && p->isLoggedIn())
     {
-        const QString &id = p->getIdentity();
         const Part &part = p->getPart();
         QString target(APP_BASE);
-        target+= id+"/"+part.toString()+"/information";
+        target+= part.toString()+"/information";
         onLinkClicked(target);
     }
     else
@@ -363,10 +335,9 @@ bool UCLWebManager::loadUploadPage()
 
     if (p && p->isLoggedIn())
     {
-        const QString &id = p->getIdentity();
         const Part &part = p->getPart();
         QString target(APP_BASE);
-        target+= id+"/"+part.toString()+"/upload";
+        target+= part.toString()+"/upload";
         onLinkClicked(target);
         return true;
     }

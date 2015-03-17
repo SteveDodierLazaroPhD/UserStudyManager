@@ -49,9 +49,7 @@ public:
     static StudyUtils *getUtils();
     static void clearUtils();
 
-    static bool isAppId(const QString &string);
     static bool isPart(const QString &string);
-    static QString getUrlAppId(const QUrl &url);
     static QString getUrlRouteName(const QUrl &url);
 
     static inline QString getStudyId()

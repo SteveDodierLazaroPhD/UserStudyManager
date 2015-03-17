@@ -72,44 +72,11 @@ void StudyUtils::clearUtils()
     }
 }
 
-bool StudyUtils::isAppId(const QString &string)
-{
-    QRegularExpression hexMatcher("^[0-9A-F]{64}$", QRegularExpression::CaseInsensitiveOption);
-    QRegularExpressionMatch match = hexMatcher.match(string);
-    return match.hasMatch();
-}
-
 bool StudyUtils::isPart(const QString &string)
 {
     QRegularExpression intMatcher("^[0-9]+$");
     QRegularExpressionMatch match = intMatcher.match(string);
     return match.hasMatch();
-}
-
-QString StudyUtils::getUrlAppId(const QUrl &url)
-{
-    QString str(url.toString());
-    str.remove(APP_BASE);
-
-    /* Not from our actual website */
-    if (str.startsWith("http"))
-        return QString();
-
-    /* Index page */
-    if (str.isEmpty())
-        return QString("next");
-
-    QStringList    bits = str.split("/");
-
-    /* Authenticated space */
-    if (StudyUtils::isAppId(bits.at(0)))
-    {
-        return bits.at(0);
-    }
-    else
-    {
-        return QString();
-    }
 }
 
 QString StudyUtils::getUrlRouteName(const QUrl &url)
@@ -129,12 +96,6 @@ QString StudyUtils::getUrlRouteName(const QUrl &url)
 
     /* Authenticated space */
     int partIndex = 0;
-    if (StudyUtils::isAppId(bits.at(partIndex)))
-    {
-        ++partIndex;
-        if (bits.length() <= partIndex)
-            return QString("status");
-    }
 
     if (StudyUtils::isPart(bits.at(partIndex)))
     {

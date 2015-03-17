@@ -12,7 +12,6 @@ Participant::Participant(QObject *parent) :
     QObject(parent),
     username("Anonymous"),
     email(),
-    appId(),
     loggedIn(false),
     currentPart(Part::NOT_STARTED_YET),
     currentStep(Step::WAITING_ENROLLMENT)
@@ -71,7 +70,7 @@ bool Participant::updateFromJson(const QString &str)
 
 bool Participant::isLoggedIn() const
 {
-    return !this->appId.isEmpty();
+    return loggedIn;
 }
 
 const QString &Participant::getUsername() const
@@ -82,11 +81,6 @@ const QString &Participant::getUsername() const
 const QString &Participant::getEmail() const
 {
     return this->email;
-}
-
-const QString &Participant::getIdentity() const
-{
-    return this->appId;
 }
 
 const Part &Participant::getPart() const
@@ -106,16 +100,13 @@ void Participant::login(const QString &username, const QString &email)
 
     QByteArray plaintext;
     plaintext.append(email);
-    QString hashed(QCryptographicHash::hash(plaintext, QCryptographicHash::Sha256).toHex());
 
     this->username = username;
     this->email = email;
-    this->appId = hashed;
     this->loggedIn = true;
 }
 
 void Participant::logout()
 {
-    this->appId.clear();
     this->loggedIn = false;
 }

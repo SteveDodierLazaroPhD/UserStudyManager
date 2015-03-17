@@ -14,7 +14,6 @@ class Participant : public QObject
 
     QString username;
     QString email;
-    QString appId;
     bool loggedIn;
     Part currentPart;
     Step currentStep;
@@ -28,7 +27,6 @@ public:
     bool isLoggedIn() const;
     const QString &getUsername() const;
     const QString &getEmail() const;
-    const QString &getIdentity() const;
     const Part &getPart() const;
     const Step &getStep() const;
 
