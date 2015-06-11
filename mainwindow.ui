@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>914</width>
+    <width>966</width>
     <height>535</height>
    </rect>
   </property>
@@ -35,7 +35,7 @@
      <number>0</number>
     </property>
     <item alignment="Qt::AlignTop">
-     <widget class="QWidget" name="buttonUI" native="true">
+     <widget class="QWidget" name="quickLinkUI" native="true">
       <layout class="QHBoxLayout" name="buttonLayout" stretch="1,0">
        <property name="leftMargin">
         <number>30</number>
@@ -68,11 +68,23 @@
           <string>Visit the Website</string>
          </property>
          <property name="icon">
-          <iconset theme="web-browser"/>
+          <iconset theme="web-browser">
+           <normaloff/>
+          </iconset>
          </property>
         </widget>
        </item>
       </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="uploadServiceUI" native="true">
+      <layout class="QHBoxLayout" name="uploadUI"/>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="progressServiceUI" native="true">
+      <layout class="QHBoxLayout" name="progressCalcUI"/>
      </widget>
     </item>
     <item>

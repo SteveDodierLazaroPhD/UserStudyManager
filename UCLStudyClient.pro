@@ -18,16 +18,18 @@ SOURCES += main.cpp\
     part.cpp \
     step.cpp \
     study.cpp \
-    uclwebmanager.cpp \
-    ucluploadmanager.cpp
+    webmanager.cpp \
+    uploadservice.cpp \
+    progressreportservice.cpp
 
 HEADERS  += mainwindow.h \
     study.h \
     participant.h \
     part.h \
     step.h \
-    uclwebmanager.h \
-    ucluploadmanager.h
+    webmanager.h \
+    uploadservice.h \
+    progressreportservice.h
 
 FORMS    += mainwindow.ui
 

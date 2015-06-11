@@ -5,12 +5,12 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 
-class UCLUploadManager : public QNetworkAccessManager
+class UploadService : public QNetworkAccessManager
 {
     Q_OBJECT
 public:
-    explicit UCLUploadManager(QObject *parent = 0);
-    ~UCLUploadManager();
+    explicit UploadService(QObject *parent = 0);
+    ~UploadService();
 
     /**
      * @brief createRequest We hook this function to interrupt specific form submissions
@@ -27,6 +27,19 @@ signals:
      * @brief onUploadFormSubmitted indicates the upload form has been submitted by the user and upload can start
      */
     void onUploadFormSubmitted();
+
+    /**
+     * @brief uploadStarted
+     */
+    void uploadStarted();
+    /**
+     * @brief uploadFinished
+     */
+    void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
+    /**
+     * @brief uploadFinished
+     */
+    void uploadFinished();
 
 public slots:
 };

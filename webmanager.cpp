@@ -1,4 +1,4 @@
-#include "uclwebmanager.h"
+#include "webmanager.h"
 #include "study.h"
 #include "participant.h"
 #include <iostream>
@@ -14,19 +14,16 @@
 
 using namespace std;
 
-UCLWebManager::UCLWebManager(QWidget *parent) :
-    QWebView(parent),
-    manager(new UCLUploadManager())
+WebManager::WebManager(QWidget *parent) :
+    QWebView(parent)
 {
-    page()->setNetworkAccessManager(manager);
-    connect(manager, SIGNAL(onUploadFormSubmitted()), this, SIGNAL(uploadStarted()));
-    connect(this, SIGNAL(linkClicked(QUrl)), this, SLOT(onLinkClicked(QUrl)));
+    connect(this, SIGNAL(linkClicked(QUrl)), this, SLOT(onHtmlLinkClicked(QUrl)));
     connect(this, SIGNAL(loadFinished(bool)), this, SLOT(onPageLoaded(bool)));
     connect(this, SIGNAL(unsupportedStepQueried(Part,Step)), this, SLOT(onUnsupportedStepQueried()));
     loadLoginPage();
 }
 
-UCLWebManager::~UCLWebManager()
+WebManager::~WebManager()
 {
     emit loadFinished(false); /* cleanup our clients */
     disconnect (this, SIGNAL(urlChanged(QUrl)), 0, 0);
@@ -34,23 +31,21 @@ UCLWebManager::~UCLWebManager()
     disconnect (this, SIGNAL(loadStarted()), 0, 0);
     disconnect (this, SIGNAL(loadProgress(int)), 0, 0);
     disconnect (this, SIGNAL(loadFinished(bool)), 0, 0);
-
-    delete manager;
 }
 
-void UCLWebManager::setUrl(const QUrl &url)
+void WebManager::setUrl(const QUrl &url)
 {
     cout << "Setting a QUrl: " << qPrintable(url.toDisplayString()) << endl;
     QWebView::setUrl(url);
 }
 
-void UCLWebManager::load(const QUrl &url)
+void WebManager::load(const QUrl &url)
 {
     cout << "Loading a QUrl: " << qPrintable(url.toDisplayString()) << endl;
     QWebView::load(url);
 }
 
-void UCLWebManager::load(const QNetworkRequest &request,
+void WebManager::load(const QNetworkRequest &request,
                     QNetworkAccessManager::Operation operation,
                     const QByteArray &body)
 {
@@ -137,7 +132,7 @@ void UCLWebManager::load(const QNetworkRequest &request,
 //}
 
 
-void UCLWebManager::onLinkClicked(const QUrl &url)
+void WebManager::onHtmlLinkClicked(const QUrl &url)
 {
     QUrl base(APP_BASE);
     if (base.isParentOf(url))
@@ -150,10 +145,9 @@ void UCLWebManager::onLinkClicked(const QUrl &url)
         cout << "External URI clicked: " << qPrintable(url.toDisplayString()) << endl;
         this->openDesktopUrl(url);
     }
-
 }
 
-void UCLWebManager::showPageForStep(const Participant *p)
+void WebManager::showPageForStep(const Participant *p)
 {
     if (!p)
         return;
@@ -174,7 +168,7 @@ void UCLWebManager::showPageForStep(const Participant *p)
     }
     else if (step == Step::INSTALL)
     {
-
+        loadInstallPage(p);
     }
     else if (step == Step::PRIMARY_TASK)
     {
@@ -182,11 +176,11 @@ void UCLWebManager::showPageForStep(const Participant *p)
     }
     else if (step == Step::RUNNING)
     {
-
+        loadShowStatusPage();
     }
     else if (step == Step::UPLOAD)
     {
-
+        loadUploadPage();
     }
     else if (step == Step::JSON_UPLOAD)
     {
@@ -203,12 +197,14 @@ void UCLWebManager::showPageForStep(const Participant *p)
     else
     {
         cerr << "Unsupported step: " << qPrintable(step.getName()) << endl;
+        emit unsupportedServerAPIQueried(step.getName(), "The study server is asking the application to perform actions that the application does not understand. This is a bug, please inform the researchers so they can fix it.");
     }
 }
 
-void UCLWebManager::onPageLoaded(const bool success)
+void WebManager::onPageLoaded(const bool success)
 {
     /* Route to correct handler */
+    //TODO extract all other url parameters into a hashtable.
     QString route = StudyUtils::getUrlRouteName(this->url());
 
     if (!success)
@@ -217,27 +213,64 @@ void UCLWebManager::onPageLoaded(const bool success)
         return;
     }
 
-    /* General page setup */
     this->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
 
-    /* Authentication succeeded */
-    if (route == "logged_in")
+
+    /* Authentication failure or needs to auth - AuthController::appLoginAction() */
+    if (route == "login")
+    {
+        this->onFailedLogin();
+        //TODO this->onLogin();
+        //TODO retrieve the last email @ from QSettings and inject it!
+    }
+    /* Authentication worked - AppPartController::loggedInAction() */
+    else if (route == "logged_in")
     {
         this->onLoggedIn();
     }
-    /* Authentication failed, mark us logged out */
-    else if (route == "login")
-    {
-        this->onFailedLogin();
-    }
-    /* The status page instructs us to display local information corresponding to the user's current part and step */
-    if (route == "status")
+    /* AppPartController::statusAction() */
+    else if (route == "status")
     {
         this->onStatus();
     }
-    /* Some pages can legitimately be embedded within the app */
-    else if (route == "contact" || route == "upload")
+
+
+    /* AppPartController::showStatusAction() */
+    else if (route == "showstatus") { /* nothing to do */ }
+    /* AppPartController::uploadAction() */
+    else if (route == "upload") { /* nothing to do */ }
+    /* AppPartController::contactAction() */
+    else if (route == "contact") { /* nothing to do */ }
+    /* AppPartController::informationAction() */
+    else if (route == "information") { /* nothing to do */ }
+
+
+    /* AppPartController::uploadingAction() */
+    else if (route == "uploading")
     {
+        //TODO
+    }
+    /* AppPartController::uploadResetAction() */
+    else if (route == "uploadreset")
+    {
+        //TODO
+    }
+    /* AppPartController::uploadDirectAction() */
+    else if (route == "upload_direct")
+    {
+        cerr << "Unsupported route: " << qPrintable(route) << endl;
+        emit unsupportedServerAPIQueried(route, "The study server is asking the application to use an uploading method that is not supported. This is a bug, please inform the researchers so they can fix it.");
+    }
+    /* AppPartController::reportProgressAction() */
+    else if (route == "reportprogress")
+    {
+        QString content = this->page()->mainFrame()->toPlainText();
+        emit reportProgressRequested(content);
+    }
+    /* AppPartController::installAction() */
+    else if (route == "install")
+    {
+        this->onInstall();
     }
     /* Other pages have not been adapted for in-app embedding, should not be displayed */
     else
@@ -245,13 +278,16 @@ void UCLWebManager::onPageLoaded(const bool success)
         cerr << "Unknown page '"<< qPrintable(this->url().toDisplayString()) <<"' loaded.\tRoute: " << qPrintable(route) << endl;
         //TODO actually manage the errors
     }
+
+    /* Manage all jResponse errors */
+    /* AppPartController::installAction(part) -> jResponse('"InstallRegistered":"Success"') */
 }
 
-void UCLWebManager::onUnsupportedStepQueried()
+void WebManager::onUnsupportedStepQueried()
 {
 }
 
-void UCLWebManager::onLoggedIn()
+void WebManager::onLoggedIn()
 {
     StudyUtils         *inst  = StudyUtils::getUtils();
     QString             str   = this->page()->mainFrame()->toPlainText();
@@ -264,25 +300,23 @@ void UCLWebManager::onLoggedIn()
         {
             inst->loginFinalize(true);
             this->showPageForStep(p);
+
+            //TODO store email @ in QSettings
         }
         else
-        {
             cerr << "An error occurred when parsing the server's response, could not login." << endl;
-        }
     }
     else
-    {
         cerr << "An error occurred when retrieving the local participant object, could not login." << endl;
-    }
 }
 
-void UCLWebManager::onFailedLogin() const
+void WebManager::onFailedLogin() const
 {
     StudyUtils         *inst  = StudyUtils::getUtils();
     inst->loginFinalize(false);
 }
 
-void UCLWebManager::onStatus()
+void WebManager::onStatus()
 {
     StudyUtils         *inst  = StudyUtils::getUtils();
     QString             str   = this->page()->mainFrame()->toPlainText();
@@ -290,25 +324,31 @@ void UCLWebManager::onStatus()
     Participant *p = inst->getParticipant();
     if (p)
     {
-        bool worked = p->updateFromJson(str);
-        if (worked)
-        {
+        if (p->updateFromJson(str))
             this->showPageForStep(p);
-        }
         else
-        {
             cerr << "An error occurred when parsing the server's response, could not continue." << endl;
-        }
     }
 }
 
-bool UCLWebManager::loadLoginPage()
+void WebManager::onInstall()
 {
-    onLinkClicked(QString(APP_BASE) + "login");
+    // We don't need to do anything since simply visiting the "install" URL is enough to register the app
+    loadStatusPage();
+}
+
+bool WebManager::loadLoginPage()
+{
+    onHtmlLinkClicked(QString(APP_BASE) + "login");
+    return true;
+}
+bool WebManager::loadStatusPage()
+{
+    onHtmlLinkClicked(QString(APP_BASE) + "status");
     return true;
 }
 
-bool UCLWebManager::loadInfoPage()
+bool WebManager::loadInfoPage()
 {
     StudyUtils *inst = StudyUtils::getUtils();
     Participant *p = inst->getParticipant();
@@ -318,7 +358,7 @@ bool UCLWebManager::loadInfoPage()
         const Part &part = p->getPart();
         QString target(APP_BASE);
         target+= part.toString()+"/information";
-        onLinkClicked(target);
+        onHtmlLinkClicked(target);
     }
     else
     {
@@ -328,7 +368,7 @@ bool UCLWebManager::loadInfoPage()
     return true;
 }
 
-bool UCLWebManager::loadUploadPage()
+bool WebManager::loadUploadPage()
 {
     StudyUtils *inst = StudyUtils::getUtils();
     Participant *p = inst->getParticipant();
@@ -338,20 +378,32 @@ bool UCLWebManager::loadUploadPage()
         const Part &part = p->getPart();
         QString target(APP_BASE);
         target+= part.toString()+"/upload";
-        onLinkClicked(target);
+        onHtmlLinkClicked(target);
         return true;
     }
     else
         return false;
 }
 
-bool UCLWebManager::loadContactPage()
+bool WebManager::loadContactPage()
 {
-    onLinkClicked(QString(APP_BASE) + "contact");
+    onHtmlLinkClicked(QString(APP_BASE) + "contact");
     return true;
 }
 
-void UCLWebManager::openDesktopUrl(const QUrl &url)
+bool WebManager::loadInstallPage(const Participant *&p)
+{
+    onHtmlLinkClicked(QString(APP_BASE) + p->getPart().toString() + "/install");
+    return true;
+}
+
+bool WebManager::loadShowStatusPage()
+{
+    onHtmlLinkClicked(QString(APP_BASE) + "showstatus");
+    return true;
+}
+
+void WebManager::openDesktopUrl(const QUrl &url)
 {
   QDesktopServices::openUrl(url);
 }

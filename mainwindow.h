@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "step.h"
-#include "uclwebmanager.h"
+#include "webmanager.h"
 
 namespace Ui {
 class MainWindow;
@@ -17,26 +17,32 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void hideAll();
     void showWebUI();
     void showQuickLinkUI();
+    void showProgressCalcUI();
 
 private:
     Ui::MainWindow *ui;
-    UCLWebManager *nm;
+    WebManager *nm;
     bool ongoingUpload;
 
 protected slots:
     void launchProcess(const QString &name) const;
     void launchActivityJournal() const;
     void launchActivityLogManager() const;
+
+    /* Events that dictate which UI is being shown */
     void onPageLoadStarted();
     void onPageLoaded(const bool);
+    void onProgressReportQueried(const QString &);
     void onStepQueried(Part part, Step step);
 
     void onUploadStart();
     void onUploadFinished();
-    void setToolbarEnabled();
 
+    /* Local UI events */
+    void setToolbarEnabled();
     void onLoadWebsiteButtonClicked();
 };
 

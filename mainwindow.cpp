@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "study.h"
-#include "uclwebmanager.h"
+#include "webmanager.h"
 #include <iostream>
 #include <QProcess>
 #include <QTimer>
@@ -31,18 +31,31 @@ void MainWindow::launchActivityLogManager() const
     this->launchProcess("ucl-study-log-manager");
 }
 
-void MainWindow::showQuickLinkUI()
+void MainWindow::hideAll()
 {
     ui->progressBar->hide();
-    ui->buttonUI->show();
+    ui->progressServiceUI->hide();
+    ui->uploadServiceUI->hide();
+    ui->quickLinkUI->hide();
     nm->hide();
+}
+
+void MainWindow::showQuickLinkUI()
+{
+    hideAll();
+    ui->quickLinkUI->show();
 }
 
 void MainWindow::showWebUI()
 {
-    ui->progressBar->hide();
-    ui->buttonUI->hide();
+    hideAll();
     nm->show();
+}
+
+void MainWindow::showProgressCalcUI()
+{
+    hideAll();
+    ui->progressServiceUI->show();
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -51,19 +64,21 @@ MainWindow::MainWindow(QWidget *parent) :
     ongoingUpload(false)
 {
     StudyUtils *inst  = StudyUtils::getUtils();
-    this->nm = new UCLWebManager(this);
+    this->nm = new WebManager(this);
 
     ui->setupUi(this);
     ui->statusBar->hide();
     ui->centralWidget->layout()->addWidget(nm);
     this->showWebUI();
 
-    connect(nm, SIGNAL(uploadStarted()), this, SLOT(onUploadStart()));
-    connect(nm, SIGNAL(uploadFinished()), this, SLOT(onUploadFinished()));
+    UploadService *upload = inst->getUploadService();
+    connect(upload, SIGNAL(uploadStarted()), this, SLOT(onUploadStart()));
+    connect(upload, SIGNAL(uploadFinished()), this, SLOT(onUploadFinished()));
 
     connect(ui->actionActivityJournal, SIGNAL(triggered()), this, SLOT(launchActivityJournal()));
     connect(ui->actionActivityLogManager, SIGNAL(triggered()), this, SLOT(launchActivityLogManager()));
     connect(ui->actionInformationSheet, SIGNAL(triggered()), nm, SLOT(loadInfoPage()));
+    connect(ui->actionCurrentProgress, SIGNAL(triggered()), nm, SLOT(loadShowStatusPage()));
     connect(ui->actionContact, SIGNAL(triggered()), nm, SLOT(loadContactPage()));
     connect(ui->actionUploadData, SIGNAL(triggered()), nm, SLOT(loadUploadPage()));
 
@@ -71,6 +86,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(nm, SIGNAL(loadProgress(int)), ui->progressBar, SLOT(setValue(int)));
     connect(nm, SIGNAL(loadFinished(bool)), this, SLOT(onPageLoaded(bool)));
     connect(nm, SIGNAL(unsupportedStepQueried(Part, Step)), this, SLOT(onStepQueried(Part, Step)));
+    connect(nm, SIGNAL(reportProgressRequested(const QString &)), this, SLOT(onProgressReportQueried(QString)));
+
     connect(ui->buttonUIButton, SIGNAL(clicked()), this, SLOT(onLoadWebsiteButtonClicked()));
 
     connect(inst, SIGNAL(onLoginStatusChanged(bool)), ui->actionContact, SLOT(setEnabled(bool)));
@@ -99,6 +116,14 @@ void MainWindow::onPageLoadStarted()
     this->showWebUI();
     ui->progressBar->reset();
     ui->progressBar->show();
+}
+
+void MainWindow::onProgressReportQueried(const QString &content)
+{
+    ProgressReportService *report = StudyUtils::getUtils()->getProgressReportService();
+    showProgressCalcUI();
+    //TODO potential connects...
+    report->processReportRequest(content);
 }
 
 void MainWindow::onPageLoaded(const bool success)

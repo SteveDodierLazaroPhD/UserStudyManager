@@ -3,6 +3,8 @@
 
 #include "participant.h"
 #include "step.h"
+#include "progressreportservice.h"
+#include "uploadservice.h"
 #include <QString>
 #include <QObject>
 #include <QList>
@@ -24,7 +26,10 @@ class StudyUtils : public QObject
     Q_OBJECT
 
 private:
-    Participant *participant;
+    Participant           *participant;
+    ProgressReportService *progressReport;
+    UploadService         *upload;
+
     bool loggedIn;
     short maxPart;
     QList<Step> stepOrder;
@@ -54,6 +59,12 @@ public:
 
     static inline QString getStudyId()
         { return STUDY_ID; }
+
+    inline ProgressReportService *getProgressReportService()
+        { return progressReport; }
+
+    inline UploadService *getUploadService()
+        { return upload; }
 
 signals:
     void onLoginStatusChanged(bool);

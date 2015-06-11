@@ -9,6 +9,8 @@ StudyUtils *StudyUtils::instance = NULL;
 
 StudyUtils::StudyUtils() :
     participant(NULL),
+    progressReport(new ProgressReportService()),
+    upload(new UploadService()),
     loggedIn(false),
     maxPart(PART_COUNT),
     stepOrder()
@@ -32,6 +34,9 @@ StudyUtils::~StudyUtils()
 {
     if (participant)
         delete participant;
+
+    delete progressReport;
+    delete upload;
 }
 
 void StudyUtils::setMaxPart(const short part)
@@ -85,7 +90,7 @@ QString StudyUtils::getUrlRouteName(const QUrl &url)
     str.remove(APP_BASE);
 
     /* Not from our actual website */
-    if (str.startsWith("http"))
+    if (str.startsWith("http") || str.startsWith("ftp"))
         return QString();
 
     /* Index page */

@@ -13,6 +13,20 @@ const Step Step::JSON_UPLOAD("json_upload", "You must upload collected data befo
 const Step Step::DEBRIEFING("debriefing", "You must meet the researchers for a debriefing session before you can proceed further.");
 const Step Step::DONE("done", "This part of the study is completed.");
 
+const Step Step::DefinedSteps[] = {
+    Step::WAITING_ENROLLMENT,
+    Step::CONSENT,
+    Step::BRIEFING,
+    Step::INSTALL,
+    Step::PRIMARY_TASK,
+    Step::RUNNING,
+    Step::UPLOAD,
+    Step::JSON_UPLOAD,
+    Step::DEBRIEFING,
+    Step::DONE,
+    Step::INVALID
+};
+
 //const Step Step::WAITING_ENROLLMENT("waiting_enrollment", 0);
 //const Step Step::CONSENT("consent", 1);
 //const Step Step::BRIEFING("briefing", 10);
@@ -46,6 +60,23 @@ Step::Step(const QString &name, const QString &mustDoLabel) :
 
 Step::~Step()
 {
+}
+
+Step Step::fromName(const QString &name)
+{
+    int i=0;
+    while (DefinedSteps[i] != INVALID) {
+        if (DefinedSteps[i].getName() == name)
+            return DefinedSteps[i];
+        ++i;
+    }
+
+    return Step(INVALID);
+}
+
+bool Step::isValid() const
+{
+    return *this != Step::INVALID;
 }
 
 Step &Step::operator =(Step const& other)

@@ -29,10 +29,14 @@ public:
     Step(const QString &name = QString(), const QString &mustDoLabel="You must visit the study website to progress through the next step.");
     ~Step();
 
+    static Step fromName(const QString &name);
+
     inline QString getName() const
         { return name; }
     inline QString getMustDoLabel() const
         { return mustDoLabel; }
+
+    bool isValid() const;
 
     Step &operator = (Step const& other);
 
@@ -54,6 +58,8 @@ public:
     static const Step JSON_UPLOAD;
     static const Step DEBRIEFING;
     static const Step DONE;
+
+    static const Step DefinedSteps[];
 };
 
 #endif // STEP_H

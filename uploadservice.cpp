@@ -1,20 +1,20 @@
 #include <iostream>
-#include "ucluploadmanager.h"
+#include "uploadservice.h"
 #include "study.h"
 using namespace std;
 
-UCLUploadManager::UCLUploadManager(QObject *parent) :
+UploadService::UploadService(QObject *parent) :
     QNetworkAccessManager(parent)
 {
     cout << "Upload manager created" << endl;
 }
 
-UCLUploadManager::~UCLUploadManager()
+UploadService::~UploadService()
 {
 
 }
 
-QNetworkReply *UCLUploadManager::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
+QNetworkReply *UploadService::createRequest(Operation op, const QNetworkRequest &request, QIODevice *outgoingData)
 {
     if (QNetworkAccessManager::PostOperation == op)
     {
