@@ -16,5 +16,9 @@
         <file>data/activity-log-manager-24.png</file>
         <file>data/activity-log-manager-32.png</file>
         <file>data/ucl-study-manager.png</file>
+        <file>data/package-24.png</file>
+        <file>data/package-32.png</file>
+        <file>data/trophy-24.png</file>
+        <file>data/trophy-32.png</file>
     </qresource>
 </RCC>
