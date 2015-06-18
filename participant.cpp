@@ -60,11 +60,11 @@ bool Participant::updateFromJson(const QString &str)
         }
     }
 
-    qDebug() << str << endl
+    /* qDebug() << str << endl
              << "Name: " << username << endl
              << "Email: " << email << endl
              << "Part: " << currentPart.toString() << endl
-             << "Step: " << currentStep.getName() << endl;
+             << "Step: " << currentStep.getName() << endl; */
     return true;
 }
 

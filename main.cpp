@@ -7,18 +7,10 @@
 #include <QLibraryInfo>
 #include <iostream>
 
-using namespace std;
-
-/**
- * @brief studySetup Use this function to configure your study
- */
-static void studySetup()
-{
-}
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    StudyUtils::init();
 
     QTranslator qtTranslator;
     qtTranslator.load("qt_" + QLocale::system().name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath));
@@ -27,8 +19,6 @@ int main(int argc, char *argv[])
     QTranslator myappTranslator;
     myappTranslator.load("study_" + QLocale::system().name());
     a.installTranslator(&myappTranslator);
-
-    studySetup();
 
     MainWindow w;
     w.show();

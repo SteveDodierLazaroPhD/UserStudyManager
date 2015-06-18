@@ -4,13 +4,14 @@
 #
 #-------------------------------------------------
 
-QT       += core gui webkitwidgets
+QT       += core gui webkitwidgets dbus concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = UCLStudyClient
 TEMPLATE = app
 
+LIBS += -lqzeitgeist5
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -20,7 +21,8 @@ SOURCES += main.cpp\
     study.cpp \
     webmanager.cpp \
     uploadservice.cpp \
-    progressreportservice.cpp
+    progressreportservice.cpp \
+    progressbutton.cpp
 
 HEADERS  += mainwindow.h \
     study.h \
@@ -29,7 +31,8 @@ HEADERS  += mainwindow.h \
     step.h \
     webmanager.h \
     uploadservice.h \
-    progressreportservice.h
+    progressreportservice.h \
+    progressbutton.h
 
 FORMS    += mainwindow.ui
 

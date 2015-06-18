@@ -6,7 +6,7 @@ using namespace std;
 UploadService::UploadService(QObject *parent) :
     QNetworkAccessManager(parent)
 {
-    cout << "Upload manager created" << endl;
+    cout << "Upload service created" << endl;
 }
 
 UploadService::~UploadService()

@@ -6,6 +6,12 @@
 #include <QList>
 #include "participant.h"
 
+struct URLParts {
+    QString route;
+    Part part;
+    Step step;
+};
+
 /**
  * @brief The WebManager class acts both as a QWebView and as a service for
  * managed the requests done between the web view and the server. It contains
@@ -19,6 +25,8 @@ class WebManager : public QWebView
 {
     Q_OBJECT
 protected:
+    static URLParts parseUrl(const QUrl &url);
+
 public:
     explicit WebManager(QWidget *parent = 0);
     ~WebManager();
@@ -78,9 +86,9 @@ protected slots:
      */
     void onLoggedIn();
 
-    void onFailedLogin() const;
+    void onLoginFormShown() const;
     void onStatus();
-    void onInstall();
+    void onInstall(const URLParts &parts);
 
 public slots:
     void openDesktopUrl(const QUrl &url);
@@ -92,6 +100,7 @@ public slots:
     bool loadInstallPage(const Participant *&p);
     bool loadUploadPage();
     bool loadShowStatusPage();
+    bool loadReportProgressPage();
     
 signals:
     /**
@@ -108,6 +117,10 @@ signals:
      */
     void unsupportedServerAPIQueried(QString id, QString description);
 
+    /**
+     * @brief reportProgressRequested TODO
+     * @param content
+     */
     void reportProgressRequested(const QString &content);
 };
 

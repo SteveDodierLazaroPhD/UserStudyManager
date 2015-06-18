@@ -2,6 +2,9 @@
 #define PART_H
 
 #include <QString>
+#include <QList>
+#include <QHash>
+#include "step.h"
 
 class Part
 {
@@ -15,6 +18,12 @@ private:
     short id;
 
     /**
+     * @brief steps
+     * The list of steps for this part of the study.
+     */
+    QList<Step> steps;
+
+    /**
      * @brief maxPartId
      * Identifies the maximum number of parts in the study. Set to 1 by
      * default, but can be changed by the application.
@@ -22,12 +31,14 @@ private:
     static short maxPartId;
 
  public:
-    Part(short partId);
+    Part(short partId = -2);
+    Part(const Part &other);
     ~Part();
 
     bool isValid() const;
     int getId() const;
     QString toString() const;
+    static Part fromString(const QString &string);
 
     bool operator <=(Part const& b) const;
     bool operator >=(Part const& b) const;
@@ -37,6 +48,12 @@ private:
     bool operator >(Part const& b) const;
 
     static void setMaxPart(short maxPart);
+
+    void registerSteps(const QList<Step> &s);
+    const QList<Step> &getSteps() const;
+
+    bool hasReached(const Step &step, const Step &threshold) const;
+    bool isBeyond(const Step &step, const Step &threshold) const;
 
     static const Part NOT_STARTED_YET;
     static const Part DONE;

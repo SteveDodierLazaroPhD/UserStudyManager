@@ -6,10 +6,10 @@
 #include "progressreportservice.h"
 #include "uploadservice.h"
 #include <QString>
-#include <QObject>
+#include <QList>
+#include <QSettings>
 #include <QList>
 
-#define PART_COUNT 2
 #define STUDY_ID        "multitasking"
 
 #define HOSTNAME        "https://study.cs.ucl.ac.uk/"
@@ -21,50 +21,65 @@
 
 #define APPS_SCHEME     "app"
 
+#define DATE_FORMAT     "yyyy-MM-dd"
+
 class StudyUtils : public QObject
 {
     Q_OBJECT
 
 private:
+    /* Local participant info */
     Participant           *participant;
+    bool                   loggedIn;
+
+    /* Services */
     ProgressReportService *progressReport;
     UploadService         *upload;
 
-    bool loggedIn;
-    short maxPart;
-    QList<Step> stepOrder;
+    /* Settings */
+    QSettings              globalSettings;
+    QSettings              userSettings;
 
     static StudyUtils *instance;
     explicit StudyUtils();
     ~StudyUtils();
 
+    void initMaxPart();
+    void initPartStepOrder();
 public:
-    void setMaxPart(const short part);
-    void loginFinalize(bool status);
-
-    inline bool isLoggedIn() const
-        { return loggedIn; }
-    inline short getMaxPart() const
-        { return maxPart; }
-    inline Participant *getParticipant() const
-        { return participant; }
-    inline const QList<Step> &getStepOrder() const
-        { return stepOrder; }
-
     static StudyUtils *getUtils();
+    static inline void init() { getUtils(); }
     static void clearUtils();
 
-    static bool isPart(const QString &string);
+    void registerInstall(const Part &part);
+    QDate getInstallDate(const Part &part) const;
+    qint64 getMinQualifyingProgress(const Part &part, const Step &step);
+    qint64 getCurrentProgress(const Part &part, const Step &step);
+    void saveCurrentProgress(const Part &part, const Step &step, const qint64 &loggedDays);
+    void saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize);
+
+    void loginFinalize(bool status);
+
+    bool isParticipantBeyond(const Part &p, const Step &s);
     static QString getUrlRouteName(const QUrl &url);
 
     static inline QString getStudyId()
         { return STUDY_ID; }
 
+    inline bool isLoggedIn() const
+        { return loggedIn; }
+    inline Participant *getParticipant() const
+        { return participant; }
+
     inline ProgressReportService *getProgressReportService()
         { return progressReport; }
-
     inline UploadService *getUploadService()
         { return upload; }
+
+    inline QSettings &getGlobalSettings()
+        { return globalSettings; }
+    inline QSettings &getUserSettings()
+        { return userSettings; }
 
 signals:
     void onLoginStatusChanged(bool);

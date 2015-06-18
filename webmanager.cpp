@@ -14,6 +14,49 @@
 
 using namespace std;
 
+URLParts WebManager::parseUrl(const QUrl &url)
+{
+    URLParts parts = { QString(), Part::INVALID, Step::INVALID };
+
+    QString str(url.toString());
+    str.remove(APP_BASE);
+
+    /* Not from our actual website */
+    if (str.startsWith("http") || str.startsWith("ftp"))
+    {
+        parts.route = QString();
+    }
+    /* Index page */
+    else if (str.isEmpty())
+    {
+        parts.route = QString("status");
+    }
+    /* General case: parsing the url */
+    else
+    {
+        QStringList    bits = str.split("/");
+
+        /* Authenticated space */
+        int partIndex = 0;
+        parts.part = Part::fromString(bits.at(partIndex));
+
+        if (parts.part.isValid())
+        {
+            ++partIndex;
+            if (bits.length() <= partIndex)
+            {
+                parts.route = QString("status");
+                return parts;
+            }
+        }
+
+        parts.route = bits.at(partIndex);
+    }
+
+    parts.step = Step::fromName(parts.route);
+    return parts;
+}
+
 WebManager::WebManager(QWidget *parent) :
     QWebView(parent)
 {
@@ -25,7 +68,6 @@ WebManager::WebManager(QWidget *parent) :
 
 WebManager::~WebManager()
 {
-    emit loadFinished(false); /* cleanup our clients */
     disconnect (this, SIGNAL(urlChanged(QUrl)), 0, 0);
     disconnect (this, SIGNAL(linkClicked(QUrl)), 0, 0);
     disconnect (this, SIGNAL(loadStarted()), 0, 0);
@@ -35,7 +77,6 @@ WebManager::~WebManager()
 
 void WebManager::setUrl(const QUrl &url)
 {
-    cout << "Setting a QUrl: " << qPrintable(url.toDisplayString()) << endl;
     QWebView::setUrl(url);
 }
 
@@ -154,6 +195,7 @@ void WebManager::showPageForStep(const Participant *p)
 
     const Part &part = p->getPart();
     const Step &step = p->getStep();
+
     if (step == Step::WAITING_ENROLLMENT)
     {
         emit unsupportedStepQueried(part, step);
@@ -175,10 +217,6 @@ void WebManager::showPageForStep(const Participant *p)
         emit unsupportedStepQueried(part, step);
     }
     else if (step == Step::RUNNING)
-    {
-        loadShowStatusPage();
-    }
-    else if (step == Step::UPLOAD)
     {
         loadUploadPage();
     }
@@ -204,8 +242,8 @@ void WebManager::showPageForStep(const Participant *p)
 void WebManager::onPageLoaded(const bool success)
 {
     /* Route to correct handler */
-    //TODO extract all other url parameters into a hashtable.
-    QString route = StudyUtils::getUrlRouteName(this->url());
+    URLParts parts = parseUrl(url());
+    //qDebug() << "Parsed: " << qPrintable(parts.route) << " + " << qPrintable(parts.part.toString()) << " + " << qPrintable(parts.step.getName()) << endl;
 
     if (!success)
     {
@@ -215,67 +253,63 @@ void WebManager::onPageLoaded(const bool success)
 
     this->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
 
-
     /* Authentication failure or needs to auth - AuthController::appLoginAction() */
-    if (route == "login")
+    if (parts.route == "login")
     {
-        this->onFailedLogin();
-        //TODO this->onLogin();
-        //TODO retrieve the last email @ from QSettings and inject it!
+        this->onLoginFormShown();
     }
     /* Authentication worked - AppPartController::loggedInAction() */
-    else if (route == "logged_in")
+    else if (parts.route == "logged_in")
     {
         this->onLoggedIn();
     }
     /* AppPartController::statusAction() */
-    else if (route == "status")
+    else if (parts.route == "status")
     {
         this->onStatus();
     }
 
 
     /* AppPartController::showStatusAction() */
-    else if (route == "showstatus") { /* nothing to do */ }
+    else if (parts.route == "showstatus") { /* nothing to do */ }
     /* AppPartController::uploadAction() */
-    else if (route == "upload") { /* nothing to do */ }
+    else if (parts.route == "upload") { /* nothing to do */ }
     /* AppPartController::contactAction() */
-    else if (route == "contact") { /* nothing to do */ }
+    else if (parts.route == "contact") { /* nothing to do */ }
     /* AppPartController::informationAction() */
-    else if (route == "information") { /* nothing to do */ }
+    else if (parts.route == "information") { /* nothing to do */ }
 
 
     /* AppPartController::uploadingAction() */
-    else if (route == "uploading")
+    else if (parts.route == "uploading")
     {
         //TODO
     }
     /* AppPartController::uploadResetAction() */
-    else if (route == "uploadreset")
+    else if (parts.route == "uploadreset")
     {
         //TODO
     }
     /* AppPartController::uploadDirectAction() */
-    else if (route == "upload_direct")
+    else if (parts.route == "upload_direct")
     {
-        cerr << "Unsupported route: " << qPrintable(route) << endl;
-        emit unsupportedServerAPIQueried(route, "The study server is asking the application to use an uploading method that is not supported. This is a bug, please inform the researchers so they can fix it.");
+        emit unsupportedServerAPIQueried(parts.route, "The study server is asking the application to use an uploading method that is not supported. This is a bug, please inform the researchers so they can fix it.");
     }
     /* AppPartController::reportProgressAction() */
-    else if (route == "reportprogress")
+    else if (parts.route == "reportprogress")
     {
         QString content = this->page()->mainFrame()->toPlainText();
         emit reportProgressRequested(content);
     }
     /* AppPartController::installAction() */
-    else if (route == "install")
+    else if (parts.route == "install")
     {
-        this->onInstall();
+        this->onInstall(parts);
     }
     /* Other pages have not been adapted for in-app embedding, should not be displayed */
     else
     {
-        cerr << "Unknown page '"<< qPrintable(this->url().toDisplayString()) <<"' loaded.\tRoute: " << qPrintable(route) << endl;
+        cerr << "Unknown page '"<< qPrintable(this->url().toDisplayString()) <<"' loaded.\tRoute: " << qPrintable(parts.route) << endl;
         //TODO actually manage the errors
     }
 
@@ -300,8 +334,6 @@ void WebManager::onLoggedIn()
         {
             inst->loginFinalize(true);
             this->showPageForStep(p);
-
-            //TODO store email @ in QSettings
         }
         else
             cerr << "An error occurred when parsing the server's response, could not login." << endl;
@@ -310,9 +342,25 @@ void WebManager::onLoggedIn()
         cerr << "An error occurred when retrieving the local participant object, could not login." << endl;
 }
 
-void WebManager::onFailedLogin() const
+void WebManager::onLoginFormShown() const
 {
-    StudyUtils         *inst  = StudyUtils::getUtils();
+    StudyUtils *inst = StudyUtils::getUtils();
+    QSettings &settings = inst->getUserSettings();
+    QWebFrame *frame = this->page()->mainFrame();
+
+    if (frame)
+    {
+        QWebElement email= frame->findFirstElement("#login_username");
+        email.setAttribute("value", settings.value("lastEmail", "").toString());
+
+        QWebElement error = frame->findFirstElement(".error");
+        if (!error.isNull())
+        {
+            // There was an error on the login form, let's remove the email address from the settings
+            settings.remove("lastEmail");
+        }
+    }
+
     inst->loginFinalize(false);
 }
 
@@ -331,8 +379,12 @@ void WebManager::onStatus()
     }
 }
 
-void WebManager::onInstall()
+void WebManager::onInstall(const URLParts &parts)
 {
+    // Inform the client to initialise the starting date of the study part
+    StudyUtils *utils = StudyUtils::getUtils();
+    utils->registerInstall(parts.part);
+
     // We don't need to do anything since simply visiting the "install" URL is enough to register the app
     loadStatusPage();
 }
@@ -375,9 +427,15 @@ bool WebManager::loadUploadPage()
 
     if (p && p->isLoggedIn())
     {
+        QString pageToShow;
+        if (inst->getCurrentProgress(p->getPart(), p->getStep()) >= inst->getMinQualifyingProgress(p->getPart(), p->getStep()))
+            pageToShow = "upload";
+        else
+            pageToShow = "reportprogress";
+
         const Part &part = p->getPart();
         QString target(APP_BASE);
-        target+= part.toString()+"/upload";
+        target+= part.toString()+"/" + pageToShow;
         onHtmlLinkClicked(target);
         return true;
     }
@@ -400,6 +458,14 @@ bool WebManager::loadInstallPage(const Participant *&p)
 bool WebManager::loadShowStatusPage()
 {
     onHtmlLinkClicked(QString(APP_BASE) + "showstatus");
+    return true;
+}
+
+bool WebManager::loadReportProgressPage()
+{
+    StudyUtils *inst = StudyUtils::getUtils();
+    Participant *p = inst->getParticipant();
+    onHtmlLinkClicked(QString(APP_BASE) + p->getPart().toString() + "/reportprogress");
     return true;
 }
 

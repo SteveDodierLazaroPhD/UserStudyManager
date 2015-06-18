@@ -27,11 +27,14 @@ public:
 //    Step(const QString &name, short stepOrder);
 //    Step(short stepOrder);
     Step(const QString &name = QString(), const QString &mustDoLabel="You must visit the study website to progress through the next step.");
+    Step(const Step &other);
     ~Step();
 
     static Step fromName(const QString &name);
 
     inline QString getName() const
+        { return name; }
+    inline QString toString() const
         { return name; }
     inline QString getMustDoLabel() const
         { return mustDoLabel; }
@@ -40,12 +43,8 @@ public:
 
     Step &operator = (Step const& other);
 
-    bool operator <=(Step const& b) const;
-    bool operator >=(Step const& b) const;
     bool operator ==(Step const& b) const;
     bool operator !=(Step const& b) const;
-    bool operator <(Step const& b) const;
-    bool operator >(Step const& b) const;
 
     static const Step INVALID;
     static const Step WAITING_ENROLLMENT;
@@ -54,7 +53,6 @@ public:
     static const Step INSTALL;
     static const Step PRIMARY_TASK;
     static const Step RUNNING;
-    static const Step UPLOAD;
     static const Step JSON_UPLOAD;
     static const Step DEBRIEFING;
     static const Step DONE;
