@@ -49,52 +49,59 @@ void StudyUtils::initMaxPart()
 
 void StudyUtils::initPartStepOrder()
 {
-    //TODO review this completely in the form of groups
-    //TODO inject descriptions via groups too!
-    QJsonObject steps = globalSettings.value("steps", "{1: [\"waiting-enrollment\", \"consent\", \"install\", \"upload\", \"done\"]}").toJsonObject();
+    QStringList def;
+    def.append("consent");
+    def.append("install");
+    def.append("running");
+    def.append("done");
 
-    QJsonObject::iterator it = steps.begin();
-    while (it != steps.end())
+    bool ok = false;
+    int partCount = globalSettings.value("partCount", 1).toUInt(&ok);
+    if(!ok)
+        partCount = 0;
+
+    for(int i=1; i<=partCount; ++i)
     {
-        bool ok = false;
-        uint id = it.key().toUInt(&ok, 10);
-        if (ok)
-        {
-            Part p(id);
-            QJsonArray array = it.value().toArray();
-            QList<Step> stepsForPart;
-            QJsonArray::iterator ait = array.begin();
-            while (ait != array.end())
-            {
-                stepsForPart.append(Step::fromName((*ait).toString()));
-                ait++;
-            }
+        globalSettings.beginGroup(QString("Part%1").arg(i));
+        QStringList steps = globalSettings.value("steps", def).toStringList();
+        globalSettings.endGroup();
 
-            p.registerSteps(stepsForPart);
+        QList<Step> stepsForPart;
+        QStringList::const_iterator it = steps.begin();
+        while (it != steps.end())
+        {
+            Step s = Step::fromName(*it);
+            //TODO check the step's own settings group for a custom "mustDo" label
+            stepsForPart.append(s);
+            it++;
         }
-        it++;
+
+        Part p(i);
+        p.registerSteps(stepsForPart);
+        Part::registerPart(p);
     }
 }
 
 void StudyUtils::registerInstall(const Part &part)
 {
-    QString start = QString("startPart%1Date").arg(part.getId());
-    QString date = QDate::currentDate().toString(DATE_FORMAT);
-
-    userSettings.setValue(start, date);
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    userSettings.setValue("startDate", QDate::currentDate().toString(DATE_FORMAT));
+    userSettings.endGroup();
     userSettings.sync();
 }
 
-QDate StudyUtils::getInstallDate(const Part &part) const
+QDate StudyUtils::getInstallDate(const Part &part)
 {
-    QString start = QString("startPart%1Date").arg(part.getId());
-    return userSettings.value(start, QDate::currentDate()).toDate();
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    QDate date = userSettings.value("startDate", QDate::currentDate()).toDate();
+    userSettings.endGroup();
+    return date;
 }
 
 qint64 StudyUtils::getMinQualifyingProgress(const Part &part, const Step &step)
 {
-    globalSettings.beginGroup(QString("Part %1").arg(part.toString()));
-    globalSettings.beginGroup(QString("Step %1").arg(step.toString()));
+    globalSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    globalSettings.beginGroup(QString("%1").arg(step.toString()));
 
     bool ok = false;
     qint64 min = globalSettings.value("minQualifyingProgress", 0).toLongLong(&ok);
@@ -109,42 +116,42 @@ qint64 StudyUtils::getMinQualifyingProgress(const Part &part, const Step &step)
 
 qint64 StudyUtils::getCurrentProgress(const Part &part, const Step &step)
 {
-    globalSettings.beginGroup(QString("Part %1").arg(part.toString()));
-    globalSettings.beginGroup(QString("Step %1").arg(step.toString()));
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    userSettings.beginGroup(QString("%1").arg(step.toString()));
 
     bool ok = false;
-    qint64 prog = globalSettings.value("currentProgress", 0).toLongLong(&ok);
+    qint64 prog = userSettings.value("currentProgress", 0).toLongLong(&ok);
     if(!ok)
         prog = 0;
 
-    globalSettings.endGroup();
-    globalSettings.endGroup();
+    userSettings.endGroup();
+    userSettings.endGroup();
 
     return prog;
 }
 
 void StudyUtils::saveCurrentProgress(const Part &part, const Step &step, const qint64 &loggedDays)
 {
-    globalSettings.beginGroup(QString("Part %1").arg(part.toString()));
-    globalSettings.beginGroup(QString("Step %1").arg(step.toString()));
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    userSettings.beginGroup(QString("%1").arg(step.toString()));
 
     //TODO SET UPSTREAM TOO !
-    globalSettings.setValue("currentProgress", loggedDays);
+    userSettings.setValue("currentProgress", loggedDays);
 
-    globalSettings.endGroup();
-    globalSettings.endGroup();
+    userSettings.endGroup();
+    userSettings.endGroup();
 }
 
 void StudyUtils::saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize)
 {
-    globalSettings.beginGroup(QString("Part %1").arg(part.toString()));
-    globalSettings.beginGroup(QString("Step %1").arg(step.toString()));
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    userSettings.beginGroup(QString("%1").arg(step.toString()));
 
-    globalSettings.setValue("uplodableArchivePath", filePath);
-    globalSettings.setValue("uplodableArchiveSize", fileSize);
+    userSettings.setValue("uplodableArchivePath", filePath);
+    userSettings.setValue("uplodableArchiveSize", fileSize);
 
-    globalSettings.endGroup();
-    globalSettings.endGroup();
+    userSettings.endGroup();
+    userSettings.endGroup();
 }
 
 void StudyUtils::loginFinalize(bool status)
@@ -185,32 +192,4 @@ bool StudyUtils::isParticipantBeyond(const Part &p, const Step &s)
         return participant->getPart() > p;
     else
         return p.isBeyond(participant->getStep(), s);
-}
-
-QString StudyUtils::getUrlRouteName(const QUrl &url)
-{
-    QString str(url.toString());
-    str.remove(APP_BASE);
-
-    /* Not from our actual website */
-    if (str.startsWith("http") || str.startsWith("ftp"))
-        return QString();
-
-    /* Index page */
-    if (str.isEmpty())
-        return QString("next");
-
-    QStringList    bits = str.split("/");
-
-    /* Authenticated space */
-    int partIndex = 0;
-
-    if (Part::fromString(bits.at(partIndex)).isValid())
-    {
-        ++partIndex;
-        if (bits.length() <= partIndex)
-            return QString("status");
-    }
-
-    return bits.at(partIndex);
 }

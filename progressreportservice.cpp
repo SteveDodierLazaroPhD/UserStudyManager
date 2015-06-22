@@ -87,7 +87,7 @@ bool ProgressReportService::processReportRequest(const QString &request)
     {
         QJsonObject participant = jObj["Participant"].toObject();
         QJsonObject status = participant["Status"].toObject();
-        Part part = Part(status["Part"].toInt());
+        Part part = Part::fromId(status["Part"].toInt());
         Step step = Step::fromName(status["Step"].toString());
 
         // We only have one type of upload, so checking that the user is at least beyond RUNNING is enough.
@@ -164,6 +164,7 @@ qint64 ProgressReportService::calculateZeitgeistDayCount(const Part &part, const
     }
 
     emit finishedProgressCalculation(part, step, loggedDays);
+    //TODO send request here.
     StudyUtils::getUtils()->saveCurrentProgress(part, step, loggedDays);
     return loggedDays;
 }

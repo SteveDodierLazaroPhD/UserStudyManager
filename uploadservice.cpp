@@ -18,9 +18,9 @@ QNetworkReply *UploadService::createRequest(Operation op, const QNetworkRequest 
 {
     if (QNetworkAccessManager::PostOperation == op)
     {
-        const QString &route = StudyUtils::getUrlRouteName(request.url());
+        //const QString &route = StudyUtils::getUrlRouteName(request.url());
         /* We intercept this call, this code is experimental/useless though */
-        if (route == "upload")
+        //if (route == "upload")
         {
             emit onUploadFormSubmitted();
         }

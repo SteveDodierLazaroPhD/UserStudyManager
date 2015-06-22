@@ -2,6 +2,7 @@
 #include <QMetaType>
 #include <iostream>
 
+QHash<short, Part> Part::parts;
 short Part::maxPartId = 0;
 
 const Part Part::NOT_STARTED_YET(0);
@@ -73,14 +74,24 @@ Part Part::fromString(const QString &string)
     short id = string.toShort(&ok, 10);
 
     if (ok)
-        return Part(id);
+        return Part::fromId(id);
     else
         return Part::INVALID;
+}
+
+Part Part::fromId(const short &id)
+{
+   return parts.value(id, Part::INVALID);
 }
 
 void Part::setMaxPart(short maxPart)
 {
     Part::maxPartId = maxPart;
+}
+
+void Part::registerPart(const Part &part)
+{
+    parts.insert(part.id, part);
 }
 
 void Part::registerSteps(const QList<Step> &s)

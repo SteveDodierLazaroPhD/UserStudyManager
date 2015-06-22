@@ -55,7 +55,7 @@ bool Participant::updateFromJson(const QString &str)
         {
             int part = obj["Part"].toInt();
             QString step = obj["Step"].toString();
-            this->currentPart = part;
+            this->currentPart = Part::fromId(part);
             this->currentStep = step;
         }
     }

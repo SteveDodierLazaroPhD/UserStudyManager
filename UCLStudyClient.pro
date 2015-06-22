@@ -38,3 +38,6 @@ FORMS    += mainwindow.ui
 
 RESOURCES += \
     icons.qrc
+
+DISTFILES += \
+    data/conf.ini/Configuration

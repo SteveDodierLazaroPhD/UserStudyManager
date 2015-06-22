@@ -14,8 +14,13 @@
 
 #define HOSTNAME        "https://study.cs.ucl.ac.uk/"
 #define STUDY_FOLDER    STUDY_ID"/"
+#ifdef QT_DEBUG
+#define WEB_FOLDER      "web/app_dev.php/"
+#define APP_FOLDER      "web/app_dev.php/a/"
+#else
 #define WEB_FOLDER      "web/"
 #define APP_FOLDER      "web/a/"
+#endif
 #define APP_BASE        HOSTNAME STUDY_FOLDER APP_FOLDER
 #define WEB_BASE        HOSTNAME STUDY_FOLDER WEB_FOLDER
 
@@ -51,17 +56,13 @@ public:
     static inline void init() { getUtils(); }
     static void clearUtils();
 
-    void registerInstall(const Part &part);
-    QDate getInstallDate(const Part &part) const;
+    QDate getInstallDate(const Part &part);
     qint64 getMinQualifyingProgress(const Part &part, const Step &step);
     qint64 getCurrentProgress(const Part &part, const Step &step);
-    void saveCurrentProgress(const Part &part, const Step &step, const qint64 &loggedDays);
-    void saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize);
 
     void loginFinalize(bool status);
 
     bool isParticipantBeyond(const Part &p, const Step &s);
-    static QString getUrlRouteName(const QUrl &url);
 
     static inline QString getStudyId()
         { return STUDY_ID; }
@@ -83,6 +84,11 @@ public:
 
 signals:
     void onLoginStatusChanged(bool);
+
+public slots:
+    void registerInstall(const Part &part);
+    void saveCurrentProgress(const Part &part, const Step &step, const qint64 &loggedDays);
+    void saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize);
 };
 
 #endif // STUDY_H

@@ -4,10 +4,13 @@
 #include <QString>
 #include <QList>
 #include <QHash>
+#include <QSharedPointer>
 #include "step.h"
 
 class Part
 {
+    friend class StudyUtils;
+
 private:
     /**
      * @brief id
@@ -30,7 +33,22 @@ private:
      */
     static short maxPartId;
 
- public:
+    /**
+     * @brief parts
+     * Stores the study's parts once they're properly initialised by the
+     * StudyUtils. Those parts are then copied by the static Part accessors.
+     */
+    static QHash<short, Part> parts;
+
+protected:
+    static void setMaxPart(short maxPart);
+    static void registerPart(const Part &part);
+    void registerSteps(const QList<Step> &s);
+
+public:
+    static Part fromId(const short &id);
+    static Part fromString(const QString &string);
+
     Part(short partId = -2);
     Part(const Part &other);
     ~Part();
@@ -38,7 +56,6 @@ private:
     bool isValid() const;
     int getId() const;
     QString toString() const;
-    static Part fromString(const QString &string);
 
     bool operator <=(Part const& b) const;
     bool operator >=(Part const& b) const;
@@ -47,9 +64,6 @@ private:
     bool operator <(Part const& b) const;
     bool operator >(Part const& b) const;
 
-    static void setMaxPart(short maxPart);
-
-    void registerSteps(const QList<Step> &s);
     const QList<Step> &getSteps() const;
 
     bool hasReached(const Step &step, const Step &threshold) const;
