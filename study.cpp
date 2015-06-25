@@ -15,8 +15,10 @@ StudyUtils *StudyUtils::instance = NULL;
 StudyUtils::StudyUtils() :
     participant(NULL),
     loggedIn(false),
+    webview(new WebViewService()),
     progressReport(new ProgressReportService()),
     upload(new UploadService()),
+    request(new RequestService()),
     globalSettings(QSettings::SystemScope, "UCL", STUDY_ID),
     userSettings(QSettings::UserScope, "UCL", STUDY_ID)
 {
@@ -24,6 +26,11 @@ StudyUtils::StudyUtils() :
     initPartStepOrder();
 
     participant = new Participant();
+
+    connect(progressReport, SIGNAL(finishedProgressCalculation(Part,Step,qint64)), this, SLOT(saveCurrentProgress(Part,Step,qint64)));
+    connect(progressReport, SIGNAL(finishedProgressCalculation(Part,Step,qint64)), request, SLOT(sendProgressReportRequest(Part,Step,qint64)));
+
+    connect(progressReport, SIGNAL(finishedPackaging(Part,Step,QString,qint64)), this, SLOT(saveUploadableArchive(Part,Step,QString,qint64)));
 }
 
 StudyUtils::~StudyUtils()
@@ -33,8 +40,10 @@ StudyUtils::~StudyUtils()
     if (participant)
         delete participant;
 
-    delete progressReport;
+    delete request;
     delete upload;
+    delete progressReport;
+    delete webview;
 }
 
 void StudyUtils::initMaxPart()
@@ -135,7 +144,6 @@ void StudyUtils::saveCurrentProgress(const Part &part, const Step &step, const q
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
     userSettings.beginGroup(QString("%1").arg(step.toString()));
 
-    //TODO SET UPSTREAM TOO !
     userSettings.setValue("currentProgress", loggedDays);
 
     userSettings.endGroup();

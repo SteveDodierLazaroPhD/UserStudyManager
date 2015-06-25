@@ -3,7 +3,9 @@
 
 #include "participant.h"
 #include "step.h"
+#include "webviewservice.h"
 #include "progressreportservice.h"
+#include "requestservice.h"
 #include "uploadservice.h"
 #include <QString>
 #include <QList>
@@ -21,8 +23,8 @@
 #define WEB_FOLDER      "web/"
 #define APP_FOLDER      "web/a/"
 #endif
-#define APP_BASE        HOSTNAME STUDY_FOLDER APP_FOLDER
 #define WEB_BASE        HOSTNAME STUDY_FOLDER WEB_FOLDER
+#define APP_BASE        HOSTNAME STUDY_FOLDER APP_FOLDER
 
 #define APPS_SCHEME     "app"
 
@@ -38,8 +40,10 @@ private:
     bool                   loggedIn;
 
     /* Services */
+    WebViewService        *webview;
     ProgressReportService *progressReport;
     UploadService         *upload;
+    RequestService        *request;
 
     /* Settings */
     QSettings              globalSettings;
@@ -72,10 +76,14 @@ public:
     inline Participant *getParticipant() const
         { return participant; }
 
+    inline WebViewService *getWebViewService()
+        { return webview; }
     inline ProgressReportService *getProgressReportService()
         { return progressReport; }
     inline UploadService *getUploadService()
         { return upload; }
+    inline RequestService *getRequestService()
+        { return request; }
 
     inline QSettings &getGlobalSettings()
         { return globalSettings; }

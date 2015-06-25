@@ -1,13 +1,5 @@
 #include "progressreportservice.h"
 
-#include <QEventLoop>
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QUrl>
-#include <QUrlQuery>
-#include <QWebSettings>
-
 #include <QtConcurrent>
 #include <QStandardPaths>
 
@@ -21,7 +13,9 @@
 #include <QJsonArray>
 
 #include <iostream>
+#include <fstream>
 #include "study.h"
+#include "tarball.h"
 
 #define DAY_IN_MSEC  86400000
 #define HOUR_IN_MSEC  3600000
@@ -38,45 +32,6 @@ ProgressReportService::ProgressReportService()
 ProgressReportService::~ProgressReportService()
 {
 }
-
-void sendRequest() //FIXME //TODO
-{
-    // create custom temporary event loop on stack
-    QEventLoop eventLoop;
-
-    // "quit()" the event-loop, when the network request "finished()"
-    QNetworkAccessManager mgr;
-    QObject::connect(&mgr, SIGNAL(finished(QNetworkReply*)), &eventLoop, SLOT(quit()));
-
-    // the HTTP request
-    QNetworkRequest req( QUrl( QString("http://time.jsontest.com/") ) );
-    QNetworkReply *reply = mgr.get(req);
-    eventLoop.exec(); // blocks stack until "finished()" has been called
-
-    if (reply->error() == QNetworkReply::NoError) {
-
-        QString strReply = (QString)reply->readAll();
-
-        //parse json
-        qDebug() << "Response:" << strReply;
-        QJsonDocument jsonResponse = QJsonDocument::fromJson(strReply.toUtf8());
-
-        QJsonObject jsonObj = jsonResponse.object();
-
-        qDebug() << "Time:" << jsonObj["time"].toString();
-        qDebug() << "Date:" << jsonObj["date"].toString();
-
-        delete reply;
-    }
-    else {
-        //failure
-        qDebug() << "Failure" <<reply->errorString();
-        delete reply;
-    }
-}
-
-
-
 
 bool ProgressReportService::processReportRequest(const QString &request)
 {
@@ -160,26 +115,84 @@ qint64 ProgressReportService::calculateZeitgeistDayCount(const Part &part, const
             // QDate surveyedDay = QDate::fromJulianDay(jd);
             // qDebug() << "Found " << list.count() << " events that day (" << qPrintable(surveyedDay.toString("yyyy-MM-dd")) << ")." << endl;
         }
-        emit stepReport(i, loggedDays);
+        emit stepReport(i+1, loggedDays);
     }
 
     emit finishedProgressCalculation(part, step, loggedDays);
-    //TODO send request here.
-    StudyUtils::getUtils()->saveCurrentProgress(part, step, loggedDays);
     return loggedDays;
 }
 
 void ProgressReportService::packageArchive(const Part &part, const Step &step)
 {
+    //TODO connect upload service to this signal and discard any current progress
     emit startingPackaging(part, step);
 
-    QString path = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "zeitgeist", QStandardPaths::LocateDirectory);
+    /* List files to package */
+    QString dirPath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "zeitgeist", QStandardPaths::LocateDirectory);
+    if(dirPath == nullptr || dirPath.isEmpty())
+    {
+        QString msg = QString("could not locate files to package for part '%1' and step '%2'").arg(part.toString()).arg(step.toString());
+        emit invalidPackagingRequest(msg);
+        return;
+    }
 
-    QString filePath(path);
+    QStringList nameFilter("*.log.gz");
+    nameFilter.append("activity.sqlite");
+    QDir dir(dirPath);
+    QStringList targets = dir.entryList(nameFilter);
+    targets.sort(Qt::CaseSensitive);
+
+    /* Filter out files that are too old or too young */
+    QStringList::iterator it = targets.begin();
+    QRegExp dateExp("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+
+    StudyUtils *utils = StudyUtils::getUtils();
+    QDate start = utils->getInstallDate(part);
+    QDate end = QDate::currentDate();
+
+    while (it!= targets.end())
+    {
+        QString log = *it;
+        QString dateStr = log;
+        dateStr.truncate(10);
+        if (dateExp.exactMatch(dateStr))
+        {
+            QDate date = QDate::fromString(dateStr, "yyyy-MM-dd");
+            if (date < start || date > end)
+                targets.erase(it);
+        }
+        it++;
+    }
+    int targetCount = targets.count();
+    emit targetForPackaging(targetCount, targets.value(0));
+
+    /* Build archive */
     qint64 fileSize = 0;
+    QString archivePath = dirPath + "/uploadTarget.tar.gz";
+    ofstream ofs(archivePath.toStdString(), ofstream::trunc);
 
-    emit finishedPackaging(part, step, filePath, fileSize);
-    StudyUtils::getUtils()->saveUploadableArchive(part, step, filePath, fileSize);
+    if (!ofs.is_open())
+    {
+        QString msg = QString("could not create an archive at '%1', the error was: %2").arg(archivePath).arg(strerror(errno));
+        emit invalidPackagingRequest(msg);
+    }
+
+    lindenb::io::Tar archive(ofs);
+    QFileInfo archiveInfo(archivePath);
+    archiveInfo.setCaching(false);
+    for (int k=0; k<targetCount; ++k)
+    {
+        QString targetName = targets.at(k);
+        QString fullPath = QString("%1/%2").arg(dirPath).arg(targetName);
+
+        archive.putFile(qPrintable(fullPath), qPrintable(targetName));
+        fileSize = archiveInfo.size();
+
+        emit stepPackaging(k+1, targets.value(k+1), fileSize);
+    }
+
+    archive.finish();
+    emit finishedPackaging(part, step, archivePath, fileSize);
 }
 
 bool ProgressReportService::processPackageArchiveRequest(const Part &part, const Step &step)

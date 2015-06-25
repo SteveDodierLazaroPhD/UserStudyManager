@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>966</width>
-    <height>629</height>
+    <height>664</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -290,7 +290,7 @@
          </property>
         </spacer>
        </item>
-       <item row="10" column="0">
+       <item row="13" column="0">
         <widget class="QLabel" name="progressArchiveStatusLabel">
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;current status or error indicator&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -304,7 +304,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="2">
+       <item row="14" column="2">
         <widget class="ProgressButton" name="progressGoToUploadButton">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -321,7 +321,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="0" colspan="2">
+       <item row="14" column="0" colspan="2">
         <widget class="QProgressBar" name="progressArchiveBar">
          <property name="maximum">
           <number>1</number>
@@ -331,6 +331,56 @@
          </property>
         </widget>
        </item>
+       <item row="11" column="0">
+        <layout class="QFormLayout" name="formLayout">
+         <property name="labelAlignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="horizontalSpacing">
+          <number>12</number>
+         </property>
+         <property name="leftMargin">
+          <number>30</number>
+         </property>
+         <property name="topMargin">
+          <number>12</number>
+         </property>
+         <property name="rightMargin">
+          <number>30</number>
+         </property>
+         <property name="bottomMargin">
+          <number>12</number>
+         </property>
+         <item row="1" column="0">
+          <widget class="QLabel" name="progressArchiveSizeLabel">
+           <property name="text">
+            <string>&lt;strong&gt;Archive size&lt;/strong&gt;</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="progressArchiveFileCountLabel">
+           <property name="text">
+            <string>&lt;strong&gt;Files to archive&lt;/strong&gt;</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="progressArchiveFileCount">
+           <property name="text">
+            <string>unknown</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="progressArchiveSize">
+           <property name="text">
+            <string>unknown</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
        <item row="3" column="0">
         <widget class="QLabel" name="progressDayStatusLabel">
          <property name="text">
@@ -338,7 +388,7 @@
          </property>
         </widget>
        </item>
-       <item row="12" column="0" colspan="3">
+       <item row="15" column="0" colspan="3">
         <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -350,6 +400,28 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="5" column="2">
+        <widget class="QLabel" name="progressWarningEraseJob">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#ff2424;&quot;&gt;Warning: the current upload job will be erased if you make a new archive.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

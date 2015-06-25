@@ -10,6 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = UCLStudyClient
 TEMPLATE = app
+CONFIG += c++11
 
 LIBS += -lqzeitgeist5
 
@@ -19,20 +20,24 @@ SOURCES += main.cpp\
     part.cpp \
     step.cpp \
     study.cpp \
-    webmanager.cpp \
     uploadservice.cpp \
     progressreportservice.cpp \
-    progressbutton.cpp
+    progressbutton.cpp \
+    tarball.cpp \
+    requestservice.cpp \
+    webviewservice.cpp
 
 HEADERS  += mainwindow.h \
     study.h \
     participant.h \
     part.h \
     step.h \
-    webmanager.h \
     uploadservice.h \
     progressreportservice.h \
-    progressbutton.h
+    progressbutton.h \
+    tarball.h \
+    requestservice.h \
+    webviewservice.h
 
 FORMS    += mainwindow.ui
 

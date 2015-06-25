@@ -21,15 +21,15 @@ struct URLParts {
  * forwarded to the main window via signals. It is the main window's job to
  * dispatch to the appropriate services and adjust the UI.
  */
-class WebManager : public QWebView
+class WebViewService : public QWebView
 {
     Q_OBJECT
 protected:
     static URLParts parseUrl(const QUrl &url);
 
 public:
-    explicit WebManager(QWidget *parent = 0);
-    ~WebManager();
+    explicit WebViewService(QWidget *parent = 0);
+    ~WebViewService();
 
     void setUrl(const QUrl &url);
     void load(const QUrl &url);
@@ -99,6 +99,7 @@ public slots:
     bool loadContactPage();
     bool loadInstallPage(const Participant *&p);
     bool loadUploadPage();
+    bool loadUploadPage(const Part &part, const Step &step);
     bool loadShowStatusPage();
     bool loadReportProgressPage();
     

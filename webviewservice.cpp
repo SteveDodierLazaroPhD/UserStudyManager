@@ -1,4 +1,4 @@
-#include "webmanager.h"
+#include "webviewservice.h"
 #include "study.h"
 #include "participant.h"
 #include <iostream>
@@ -14,7 +14,7 @@
 
 using namespace std;
 
-URLParts WebManager::parseUrl(const QUrl &url)
+URLParts WebViewService::parseUrl(const QUrl &url)
 {
     URLParts parts = { QString(), Part::INVALID, Step::INVALID };
 
@@ -57,7 +57,7 @@ URLParts WebManager::parseUrl(const QUrl &url)
     return parts;
 }
 
-WebManager::WebManager(QWidget *parent) :
+WebViewService::WebViewService(QWidget *parent) :
     QWebView(parent)
 {
     connect(this, SIGNAL(linkClicked(QUrl)), this, SLOT(onHtmlLinkClicked(QUrl)));
@@ -66,7 +66,7 @@ WebManager::WebManager(QWidget *parent) :
     loadLoginPage();
 }
 
-WebManager::~WebManager()
+WebViewService::~WebViewService()
 {
     disconnect (this, SIGNAL(urlChanged(QUrl)), 0, 0);
     disconnect (this, SIGNAL(linkClicked(QUrl)), 0, 0);
@@ -75,18 +75,18 @@ WebManager::~WebManager()
     disconnect (this, SIGNAL(loadFinished(bool)), 0, 0);
 }
 
-void WebManager::setUrl(const QUrl &url)
+void WebViewService::setUrl(const QUrl &url)
 {
     QWebView::setUrl(url);
 }
 
-void WebManager::load(const QUrl &url)
+void WebViewService::load(const QUrl &url)
 {
     cout << "Loading a QUrl: " << qPrintable(url.toDisplayString()) << endl;
     QWebView::load(url);
 }
 
-void WebManager::load(const QNetworkRequest &request,
+void WebViewService::load(const QNetworkRequest &request,
                     QNetworkAccessManager::Operation operation,
                     const QByteArray &body)
 {
@@ -173,7 +173,7 @@ void WebManager::load(const QNetworkRequest &request,
 //}
 
 
-void WebManager::onHtmlLinkClicked(const QUrl &url)
+void WebViewService::onHtmlLinkClicked(const QUrl &url)
 {
     QUrl base(APP_BASE);
     if (base.isParentOf(url))
@@ -188,7 +188,7 @@ void WebManager::onHtmlLinkClicked(const QUrl &url)
     }
 }
 
-void WebManager::showPageForStep(const Participant *p)
+void WebViewService::showPageForStep(const Participant *p)
 {
     if (!p)
         return;
@@ -239,7 +239,7 @@ void WebManager::showPageForStep(const Participant *p)
     }
 }
 
-void WebManager::onPageLoaded(const bool success)
+void WebViewService::onPageLoaded(const bool success)
 {
     /* Route to correct handler */
     URLParts parts = parseUrl(url());
@@ -317,11 +317,11 @@ void WebManager::onPageLoaded(const bool success)
     /* AppPartController::installAction(part) -> jResponse('"InstallRegistered":"Success"') */
 }
 
-void WebManager::onUnsupportedStepQueried()
+void WebViewService::onUnsupportedStepQueried()
 {
 }
 
-void WebManager::onLoggedIn()
+void WebViewService::onLoggedIn()
 {
     StudyUtils         *inst  = StudyUtils::getUtils();
     QString             str   = this->page()->mainFrame()->toPlainText();
@@ -342,7 +342,7 @@ void WebManager::onLoggedIn()
         cerr << "An error occurred when retrieving the local participant object, could not login." << endl;
 }
 
-void WebManager::onLoginFormShown() const
+void WebViewService::onLoginFormShown() const
 {
     StudyUtils *inst = StudyUtils::getUtils();
     QSettings &settings = inst->getUserSettings();
@@ -364,7 +364,7 @@ void WebManager::onLoginFormShown() const
     inst->loginFinalize(false);
 }
 
-void WebManager::onStatus()
+void WebViewService::onStatus()
 {
     StudyUtils         *inst  = StudyUtils::getUtils();
     QString             str   = this->page()->mainFrame()->toPlainText();
@@ -379,7 +379,7 @@ void WebManager::onStatus()
     }
 }
 
-void WebManager::onInstall(const URLParts &parts)
+void WebViewService::onInstall(const URLParts &parts)
 {
     // Inform the client to initialise the starting date of the study part
     StudyUtils *utils = StudyUtils::getUtils();
@@ -389,18 +389,18 @@ void WebManager::onInstall(const URLParts &parts)
     loadStatusPage();
 }
 
-bool WebManager::loadLoginPage()
+bool WebViewService::loadLoginPage()
 {
     onHtmlLinkClicked(QString(APP_BASE) + "login");
     return true;
 }
-bool WebManager::loadStatusPage()
+bool WebViewService::loadStatusPage()
 {
     onHtmlLinkClicked(QString(APP_BASE) + "status");
     return true;
 }
 
-bool WebManager::loadInfoPage()
+bool WebViewService::loadInfoPage()
 {
     StudyUtils *inst = StudyUtils::getUtils();
     Participant *p = inst->getParticipant();
@@ -420,22 +420,16 @@ bool WebManager::loadInfoPage()
     return true;
 }
 
-bool WebManager::loadUploadPage()
+bool WebViewService::loadUploadPage()
 {
     StudyUtils *inst = StudyUtils::getUtils();
     Participant *p = inst->getParticipant();
 
     if (p && p->isLoggedIn())
     {
-        QString pageToShow;
-        if (inst->getCurrentProgress(p->getPart(), p->getStep()) >= inst->getMinQualifyingProgress(p->getPart(), p->getStep()))
-            pageToShow = "upload";
-        else
-            pageToShow = "reportprogress";
-
         const Part &part = p->getPart();
         QString target(APP_BASE);
-        target+= part.toString()+"/" + pageToShow;
+        target+= part.toString()+"/upload";
         onHtmlLinkClicked(target);
         return true;
     }
@@ -443,25 +437,33 @@ bool WebManager::loadUploadPage()
         return false;
 }
 
-bool WebManager::loadContactPage()
+bool WebViewService::loadUploadPage(const Part &part, const Step &)
+{
+    QString target(APP_BASE);
+    target+= part.toString()+"/upload";
+    onHtmlLinkClicked(target);
+    return true;
+}
+
+bool WebViewService::loadContactPage()
 {
     onHtmlLinkClicked(QString(APP_BASE) + "contact");
     return true;
 }
 
-bool WebManager::loadInstallPage(const Participant *&p)
+bool WebViewService::loadInstallPage(const Participant *&p)
 {
     onHtmlLinkClicked(QString(APP_BASE) + p->getPart().toString() + "/install");
     return true;
 }
 
-bool WebManager::loadShowStatusPage()
+bool WebViewService::loadShowStatusPage()
 {
     onHtmlLinkClicked(QString(APP_BASE) + "showstatus");
     return true;
 }
 
-bool WebManager::loadReportProgressPage()
+bool WebViewService::loadReportProgressPage()
 {
     StudyUtils *inst = StudyUtils::getUtils();
     Participant *p = inst->getParticipant();
@@ -469,7 +471,7 @@ bool WebManager::loadReportProgressPage()
     return true;
 }
 
-void WebManager::openDesktopUrl(const QUrl &url)
+void WebViewService::openDesktopUrl(const QUrl &url)
 {
   QDesktopServices::openUrl(url);
 }

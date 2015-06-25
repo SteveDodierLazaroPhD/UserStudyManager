@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "study.h"
-#include "webmanager.h"
+#include "webviewservice.h"
 #include <iostream>
 #include <QProcess>
 #include <QTimer>
@@ -108,7 +108,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ongoingUpload(false)
 {
     StudyUtils *inst  = StudyUtils::getUtils();
-    this->nm = new WebManager(this);
+    this->nm = inst->getWebViewService();
 
     ui->setupUi(this);
     ui->statusBar->hide();
@@ -116,10 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->showWebUI();
     this->loadSettings();
 
-    UploadService *upload = inst->getUploadService();
-    connect(upload, SIGNAL(uploadStarted()), this, SLOT(onUploadStart()));
-    connect(upload, SIGNAL(uploadFinished()), this, SLOT(onUploadFinished()));
-
+    /* Toolbar buttons */
     connect(ui->actionActivityJournal, SIGNAL(triggered()), this, SLOT(launchActivityJournal()));
     connect(ui->actionActivityLogManager, SIGNAL(triggered()), this, SLOT(launchActivityLogManager()));
     connect(ui->actionInformationSheet, SIGNAL(triggered()), nm, SLOT(loadInfoPage()));
@@ -128,22 +125,43 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionContact, SIGNAL(triggered()), nm, SLOT(loadContactPage()));
     connect(ui->actionUploadData, SIGNAL(triggered()), nm, SLOT(loadUploadPage()));
 
+    /* Web manager events */
     connect(nm, SIGNAL(loadStarted()), this, SLOT(onPageLoadStarted()));
     connect(nm, SIGNAL(loadProgress(int)), ui->progressBar, SLOT(setValue(int)));
     connect(nm, SIGNAL(loadFinished(bool)), this, SLOT(onPageLoaded(bool)));
     connect(nm, SIGNAL(unsupportedStepQueried(Part, Step)), this, SLOT(onUnsupportedStepQueried(Part, Step)));
     connect(nm, SIGNAL(reportProgressRequested(const QString &)), this, SLOT(onProgressReportQueried(QString)));
 
+    /* Progress report service - progress calculation */
     ProgressReportService *progress = inst->getProgressReportService();
     connect(progress, SIGNAL(startingReport(Part,Step)), this, SLOT(onReportStarting(Part,Step)));
     connect(progress, SIGNAL(targetForReport(qint64)), this, SLOT(onReportTargetElicited(qint64)));
     connect(progress, SIGNAL(stepReport(qint64,qint64)), this, SLOT(onReportStep(qint64,qint64)));
     connect(progress, SIGNAL(finishedProgressCalculation(Part, Step, qint64)), this, SLOT(onReportSuccess(Part, Step, qint64)));
     connect(progress, SIGNAL(invalidReportRequest(QString)), this, SLOT(onReportRequestFailure(QString)));
-
     connect(ui->progressGoToPackagingButton, SIGNAL(clicked(Part,Step)), progress, SLOT(processPackageArchiveRequest(Part,Step)));
 
+    /* Progress report service - archive packaging */
+    connect(progress, SIGNAL(startingPackaging(Part,Step)), this, SLOT(onPackagingStarting(Part,Step)));
+    connect(progress, SIGNAL(targetForPackaging(qint64,QString)), this, SLOT(onPackagingTargetElicited(qint64,QString)));
+    connect(progress, SIGNAL(stepPackaging(qint64,QString,qint64)), this, SLOT(onPackagingStep(qint64,QString,qint64)));
+    connect(progress, SIGNAL(finishedPackaging(Part,Step,QString,qint64)), this, SLOT(onPackagingSuccess(Part,Step,QString,qint64)));
+    connect(progress, SIGNAL(invalidPackagingRequest(QString)), this, SLOT(onPackagingFailure(QString)));
+    connect(ui->progressGoToUploadButton, SIGNAL(clicked(Part,Step)), nm, SLOT(loadUploadPage(Part,Step)));
+
+
+
+
+
     connect(ui->buttonUIButton, SIGNAL(clicked()), this, SLOT(onLoadWebsiteButtonClicked()));
+
+    /* Upload service */
+
+    UploadService *upload = inst->getUploadService();
+    connect(upload, SIGNAL(uploadStarted()), this, SLOT(onUploadStart()));
+    connect(upload, SIGNAL(uploadFinished()), this, SLOT(onUploadFinished()));
+    ui->progressWarningEraseJob->setVisible(false);
+    //TODO    connect(upload, SIGNAL(....))
 
     connect(inst, SIGNAL(onLoginStatusChanged(bool)), ui->actionContact, SLOT(setEnabled(bool)));
     connect(inst, SIGNAL(onLoginStatusChanged(bool)), ui->actionUploadData, SLOT(setEnabled(bool)));
@@ -216,10 +234,10 @@ void MainWindow::onReportSuccess(const Part &part, const Step &step, const qint6
 {
     ui->progressGoToPackagingButton->setCurrentPart(part);
     ui->progressGoToPackagingButton->setCurrentStep(step);
-    ui->progressGoToPackagingButton->setEnabled(true);
+    ui->progressGoToPackagingButton->setEnabled(result >= StudyUtils::getUtils()->getMinQualifyingProgress(part, step));
     ui->progressDayBar->setValue(ui->progressDayBar->maximum());
     ui->daysCollected->setText(QString("%1 days").arg(result));
-    ui->progressDayStatusLabel->setText("<i>Done!");
+    ui->progressDayStatusLabel->setText("<i>Done!</i>");
 }
 
 void MainWindow::onReportRequestFailure(const QString &message)
@@ -234,6 +252,76 @@ void MainWindow::onReportRequestFailure(const QString &message)
 
     ui->progressDayStatusLabel->setText(QString("<span style=\" font-weight:600; color:#ff2424;\">Error: %1</span>").arg(message));
     ui->progressArchiveStatusLabel->setText("");
+}
+
+void MainWindow::onPackagingStarting(const Part &, const Step &)
+{
+    ui->progressArchiveBar->reset();
+    ui->progressArchiveBar->setEnabled(true);
+    ui->progressArchiveStatusLabel->setText("");
+    ui->progressArchiveFileCount->setText("<i>calculating...<i>");
+    ui->progressArchiveSize->setText("<i>0...<i>");
+
+    ui->progressGoToPackagingButton->setEnabled(false);
+    ui->progressGoToUploadButton->setEnabled(false);
+}
+
+void MainWindow::onPackagingTargetElicited(const qint64 &target, const QString &nextFile)
+{
+    ui->progressArchiveBar->setValue(0);
+    ui->progressArchiveBar->setMaximum(target);
+    ui->progressArchiveFileCount->setText(QString("%1").arg(target));
+    if (nextFile.isEmpty())
+        ui->progressArchiveStatusLabel->setText(QString("<i>No files to archive...<i>"));
+    else
+        ui->progressArchiveStatusLabel->setText(QString("<i>Archiving %1...<i>").arg(nextFile));
+}
+
+static QString sizeToHumanReadable(const qint64 &fileSize)
+{
+    float size = fileSize;
+    QStringList list;
+    list << "KB" << "MB" << "GB" << "TB";
+
+    QStringListIterator i(list);
+    QString unit("bytes");
+
+    while(size >= 1024 && i.hasNext())
+     {
+        unit = i.next();
+        size /= 1024;
+    }
+
+    return QString("%1 %2").arg(QString().setNum(size,'f',2)).arg(unit);
+}
+
+void MainWindow::onPackagingStep(const qint64 &filesChecked, const QString &nextFile, const qint64 &tmpFileSize)
+{
+    ui->progressArchiveBar->setValue(filesChecked);
+    ui->progressArchiveSize->setText(QString("<i>%1...</i>").arg(sizeToHumanReadable(tmpFileSize)));
+    if (nextFile.isEmpty())
+        ui->progressArchiveStatusLabel->setText(QString("<i>Archived all files<i>"));
+    else
+        ui->progressArchiveStatusLabel->setText(QString("<i>Archiving %1...<i>").arg(nextFile));
+}
+
+void MainWindow::onPackagingSuccess(const Part &part, const Step &step, const QString &filename, const qint64 &fileSize)
+{
+    ui->progressGoToUploadButton->setCurrentPart(part);
+    ui->progressGoToUploadButton->setCurrentStep(step);
+    ui->progressGoToUploadButton->setEnabled(true);
+    ui->progressArchiveBar->setValue(ui->progressDayBar->maximum());
+    ui->progressArchiveSize->setText(QString("<i>%1...</i>").arg(sizeToHumanReadable(fileSize)));
+    ui->progressDayStatusLabel->setText(QString("<i>Archive %1 created successfully!</i>").arg(filename));
+}
+
+void MainWindow::onPackagingFailure(const QString &message)
+{
+    ui->progressArchiveBar->setEnabled(false);
+    ui->progressGoToPackagingButton->setEnabled(true);
+    ui->progressGoToUploadButton->setEnabled(false);
+
+    ui->progressArchiveStatusLabel->setText(QString("<span style=\" font-weight:600; color:#ff2424;\">Error: %1</span>").arg(message));
 }
 
 void MainWindow::onPageLoaded(const bool success)

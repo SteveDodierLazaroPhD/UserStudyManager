@@ -4,7 +4,7 @@
 #include <QMainWindow>
 #include <QSettings>
 #include "step.h"
-#include "webmanager.h"
+#include "webviewservice.h"
 
 namespace Ui {
 class MainWindow;
@@ -25,7 +25,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    WebManager *nm;
+    WebViewService *nm; // OWNED BY STUDYUTILS!
     bool ongoingUpload;
 
     void saveSettings();
@@ -49,6 +49,11 @@ protected slots:
     void onReportSuccess(const Part &part, const Step &step, const qint64 &result);
     void onReportRequestFailure(const QString &message);
 
+    void onPackagingStarting(const Part &part, const Step &step);
+    void onPackagingTargetElicited(const qint64 &target, const QString &nextFile);
+    void onPackagingStep(const qint64 &daysChecked, const QString &nextFile, const qint64 &tmpFileSize);
+    void onPackagingSuccess(const Part &part, const Step &step, const QString &filename, const qint64 &fileSize);
+    void onPackagingFailure(const QString &message);
 
     void onUploadStart();
     void onUploadFinished();

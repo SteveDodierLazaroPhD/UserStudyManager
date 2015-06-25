@@ -33,8 +33,8 @@ signals:
     void invalidReportRequest(const QString &msg);
 
     void startingPackaging(const Part &, const Step &);
-    void targetForPackaging(const qint64 &target);
-    void stepPackaging(const qint64 &step, const qint64 &tmpSize);
+    void targetForPackaging(const qint64 &target, const QString &nextFile);
+    void stepPackaging(const qint64 &step, const QString &nextFile, const qint64 &tmpSize);
     void finishedPackaging(const Part &, const Step &, const QString &filePath, const qint64 &fileSize);
     void invalidPackagingRequest(const QString &msg);
 };
