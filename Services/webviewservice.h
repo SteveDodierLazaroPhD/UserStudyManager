@@ -94,6 +94,7 @@ protected slots:
 
     void onLoginFormShown() const;
     void onStatus();
+    void onDebriefing() const;
     void onInstall(const URLParts &parts);
 
 public slots:
@@ -103,6 +104,7 @@ public slots:
     bool loadStatusPage();
     bool loadInfoPage();
     bool loadContactPage();
+    bool loadDebriefingPage();
     bool loadInstallPage(const Participant *&p);
     bool loadUploadPage();
     bool loadUploadPage(const Part &part, const Step &step);

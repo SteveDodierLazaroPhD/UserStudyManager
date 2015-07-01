@@ -242,7 +242,7 @@ void WebViewService::showPageForStep(const Participant *p)
     }
     else if (step == Step::DEBRIEFING)
     {
-        emit unsupportedStepQueried(part, step);
+        loadDebriefingPage();
     }
     else if (step == Step::DONE)
     {
@@ -283,6 +283,11 @@ void WebViewService::onPageLoaded(const bool success)
     else if (parts.route == "status")
     {
         this->onStatus();
+    }
+    /* AppPartController::debriefingAction() */
+    else if (parts.route == "debriefing")
+    {
+        this->onDebriefing();
     }
 
     /* AppPartController::showStatusAction() */
@@ -381,8 +386,8 @@ void WebViewService::onLoginFormShown() const
 
 void WebViewService::onStatus()
 {
-    StudyUtils         *inst  = StudyUtils::getUtils();
-    QString             str   = this->page()->mainFrame()->toPlainText();
+    StudyUtils *inst = StudyUtils::getUtils();
+    QString str = this->page()->mainFrame()->toPlainText();
 
     Participant *p = inst->getParticipant();
     if (p)
@@ -391,6 +396,20 @@ void WebViewService::onStatus()
             this->showPageForStep(p);
         else
             cerr << "An error occurred when parsing the server's response, could not continue." << endl;
+    }
+}
+
+void WebViewService::onDebriefing() const
+{
+    StudyUtils *inst = StudyUtils::getUtils();
+    Participant *p = inst->getParticipant();
+
+    QWebFrame *frame = this->page()->mainFrame();
+    if (frame)
+    {
+        QWebElement textArea= frame->findFirstElement("#form_message");
+        textArea.appendInside("Hello,\n\nI have uploaded my data and would like to schedule a debriefing interview.\n\nI am available on the: _________\nI prefer to be interviewed: _________ (in person / via Skype or Hangout).\n\nCould you please contact me to indicate a time and place of interview?\n\nThanks!\n" + p->getUsername());
+        textArea.setStyleProperty("min-height", "18em");
     }
 }
 
@@ -475,6 +494,14 @@ bool WebViewService::loadInstallPage(const Participant *&p)
 bool WebViewService::loadShowStatusPage()
 {
     onHtmlLinkClicked(QString(APP_BASE) + "showstatus");
+    return true;
+}
+
+bool WebViewService::loadDebriefingPage()
+{
+    StudyUtils *inst = StudyUtils::getUtils();
+    Participant *p = inst->getParticipant();
+    onHtmlLinkClicked(QString(APP_BASE) + p->getPart().toString() + "/debriefing");
     return true;
 }
 
