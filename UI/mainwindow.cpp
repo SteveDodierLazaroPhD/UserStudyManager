@@ -82,6 +82,25 @@ void MainWindow::loadSettings()
     settings.endGroup();
 }
 
+void MainWindow::setUploadOngoing(const bool &currentUploadStatus, const Part &part, const Step &step)
+{
+    if(currentUploadStatus && !ongoingUpload)
+    {
+        ongoingUpload = true;
+        uploadPart = part;
+        uploadStep = step;
+        form->pushButton->show();
+        form->progressBar->show();
+    }
+    else if (!currentUploadStatus && ongoingUpload)
+    {
+        uploadPart = Part::INVALID;
+        uploadStep = Step::INVALID;
+        form->pushButton->hide();
+        form->progressBar->hide();
+    }
+}
+
 void MainWindow::hideAll()
 {
     ui->progressBar->hide();
@@ -377,21 +396,16 @@ void MainWindow::onUnsupportedStepQueried(Part /*part*/, Step step)
 
 void MainWindow::onUploadStarted(const Part &part, const Step &step)
 {
-    ongoingUpload = true;
-    uploadPart = part;
-    uploadStep = step;
-    form->pushButton->show();
-    form->progressBar->show();
+    setUploadOngoing(true, part, step);
     form->progressBar->reset();
     ui->uploadBar->reset();
     ui->uploadStatusLabel->setText("<i>currently sending your data...</i>");
     showUploadUI();
-
-    //TODO reset the pbar
 }
 
 void MainWindow::onUploadTargetSet(const Part &part, const Step &step, const qint64 &expectedSize)
 {
+    setUploadOngoing(true, part, step);
     if (uploadPart == part && uploadStep == step)
     {
         form->progressBar->setMaximum(expectedSize);
@@ -401,6 +415,7 @@ void MainWindow::onUploadTargetSet(const Part &part, const Step &step, const qin
 
 void MainWindow::onUploadStep(const Part &part, const Step &step, const qint64 &sentSize)
 {
+    setUploadOngoing(true, part, step);
     if (uploadPart == part && uploadStep == step)
     {
         form->progressBar->setValue(sentSize);
@@ -408,21 +423,14 @@ void MainWindow::onUploadStep(const Part &part, const Step &step, const qint64 &
     }
 }
 
-void MainWindow::finishUpload()
-{
-    ongoingUpload = false;
-    uploadPart = Part::INVALID;
-    uploadStep = Step::INVALID;
-    form->pushButton->hide();
-    form->progressBar->hide();
-}
-
 void MainWindow::onUploadSucceeded(const Part &part, const Step &step)
 {
     if (uploadPart == part && uploadStep == step)
     {
-        finishUpload();
+        setUploadOngoing(false, part, step);
         ui->uploadStatusLabel->setText("<i>Done!</i>");
+        ui->uploadBar->setValue(ui->uploadBar->maximum());
+        form->progressBar->setValue(form->progressBar->maximum());
     }
 }
 
@@ -430,14 +438,14 @@ void MainWindow::onUploadFailed(const Part &part, const Step &step, const QStrin
 {
     if (uploadPart == part && uploadStep == step)
     {
-        finishUpload();
+        setUploadOngoing(false, part, step);
         ui->uploadStatusLabel->setText(QString("<span style=\" font-weight:600; color:#ff2424;\">Upload interrupted: %1</span>").arg(errMsg));
     }
 }
 
 void MainWindow::onShowUploadButtonClicked()
 {
-    showWebUI();
+    showUploadUI();
 }
 
 void MainWindow::onLoadWebsiteButtonClicked()

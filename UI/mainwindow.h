@@ -41,7 +41,7 @@ private:
     void saveSettings();
     void loadSettings();
 
-    void finishUpload();
+    void setUploadOngoing(const bool &currentUploadStatus, const Part &part, const Step &step);
 
 protected slots:
     void launchProcess(const QString &name) const;

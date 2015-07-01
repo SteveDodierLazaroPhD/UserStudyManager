@@ -14,6 +14,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QMutexLocker>
+#include <QDebug>
 #include <iostream>
 
 RequestService::RequestService(QObject *parent) :
@@ -52,10 +53,10 @@ QString RequestService::postRequest(const QUrl &url, const QByteArray &content, 
         qDebug() << *errorPlaceholder;
     }
 
-    qDebug() << "Request to: " << qPrintable(url.toString()) << std::endl;
-    qDebug() << "Content: "<< (content.length() > 20000? "Content too long":qPrintable(content)) << std::endl;
-    qDebug() << "Content length: "<< content.length() << std::endl;
-    qDebug() << "Reply: " << qPrintable(replyContent) << std::endl<< std::endl<< std::endl;
+    qDebug() << "Request to: " << qPrintable(url.toString());
+    qDebug() << "Content: "<< (content.length() > 20000? "Content too long":qPrintable(content));
+    qDebug() << "Content length: "<< content.length();
+    qDebug() << "Reply: " << qPrintable(replyContent);
 
     delete reply;
     return replyContent;
@@ -148,7 +149,7 @@ void RequestService::dispatchUploadMessage(const QString &message)
 
 void RequestService::onError(const Part &part, const Step &step, const QString &errMsg)
 {
-    qDebug() << "Error: " << qPrintable(errMsg) << std::endl;
+    qDebug() << "Error: " << qPrintable(errMsg);
     emit uploadFailed(part, step, errMsg);
 }
 
