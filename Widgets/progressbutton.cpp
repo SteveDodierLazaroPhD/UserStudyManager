@@ -1,4 +1,8 @@
-#include "progressbutton.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
+#include "Widgets/progressbutton.h"
 
 ProgressButton::ProgressButton(QWidget *parent) :
     QPushButton(parent),

@@ -1,10 +1,14 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #ifndef PARTICIPANT_H
 #define PARTICIPANT_H
 
+#include "Model/part.h"
+#include "Model/step.h"
 #include <QObject>
 #include <QString>
-#include "part.h"
-#include "step.h"
 
 class Participant : public QObject
 {

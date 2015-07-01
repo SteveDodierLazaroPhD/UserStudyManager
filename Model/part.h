@@ -1,11 +1,15 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #ifndef PART_H
 #define PART_H
 
+#include "Model/step.h"
 #include <QString>
 #include <QList>
 #include <QHash>
 #include <QSharedPointer>
-#include "step.h"
 
 class Part
 {

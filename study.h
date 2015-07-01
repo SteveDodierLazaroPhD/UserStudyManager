@@ -1,16 +1,22 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #ifndef STUDY_H
 #define STUDY_H
 
-#include "participant.h"
-#include "step.h"
-#include "webviewservice.h"
-#include "progressreportservice.h"
-#include "requestservice.h"
-#include "uploadservice.h"
+#include "Model/participant.h"
+#include "Model/step.h"
+#include "Services/webviewservice.h"
+#include "Services/progressreportservice.h"
+#include "Services/requestservice.h"
+#include "Services/uploadservice.h"
 #include <QString>
 #include <QList>
+#include <QNetworkCookieJar>
 #include <QSettings>
 #include <QList>
+#include <QMutex>
 
 #define STUDY_ID        "multitasking"
 
@@ -39,6 +45,9 @@ private:
     Participant           *participant;
     bool                   loggedIn;
 
+    /* Shared service resources */
+    QNetworkCookieJar     *jarjarbinks;
+
     /* Services */
     WebViewService        *webview;
     ProgressReportService *progressReport;
@@ -48,6 +57,7 @@ private:
     /* Settings */
     QSettings              globalSettings;
     QSettings              userSettings;
+    QMutex                 settingsMutex;
 
     static StudyUtils *instance;
     explicit StudyUtils();
@@ -96,7 +106,10 @@ signals:
 public slots:
     void registerInstall(const Part &part);
     void saveCurrentProgress(const Part &part, const Step &step, const qint64 &loggedDays);
-    void saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize);
+    qint64 getUploadableArchiveSize(const Part &part, const Step &step);
+    QString getUploadableArchivePath(const Part &part, const Step &step);
+    QString getUploadableArchiveChecksum(const Part &part, const Step &step);
+    void saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize, const QString &checksum);
 };
 
 #endif // STUDY_H

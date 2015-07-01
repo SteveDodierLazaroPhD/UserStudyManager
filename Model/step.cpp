@@ -1,5 +1,9 @@
-#include "step.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #include "study.h"
+#include "Model/step.h"
 #include <QMetaType>
 
 //TODO replace "You must" strings by settingd

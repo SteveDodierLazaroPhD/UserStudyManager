@@ -1,6 +1,8 @@
-#include "mainwindow.h"
-#include "study.h"
-#include "part.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
+#include "UI/mainwindow.h"
 #include "study.h"
 #include <QApplication>
 #include <QTranslator>

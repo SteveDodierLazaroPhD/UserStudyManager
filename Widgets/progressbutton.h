@@ -1,9 +1,13 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #ifndef PROGRESSBUTTON_H
 #define PROGRESSBUTTON_H
 
+#include "Model/part.h"
+#include "Model/step.h"
 #include <QPushButton>
-#include "part.h"
-#include "step.h"
 
 class ProgressButton : public QPushButton
 {

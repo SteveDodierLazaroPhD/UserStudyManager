@@ -14,32 +14,40 @@ CONFIG += c++11
 
 LIBS += -lqzeitgeist5
 
+INCLUDEPATH += ./Widgets/
+
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    participant.cpp \
-    part.cpp \
-    step.cpp \
     study.cpp \
-    uploadservice.cpp \
-    progressreportservice.cpp \
-    progressbutton.cpp \
-    tarball.cpp \
-    requestservice.cpp \
-    webviewservice.cpp
+    Services/webviewservice.cpp \
+    UI/mainwindow.cpp \
+    Model/part.cpp \
+    Model/participant.cpp \
+    Model/step.cpp \
+    Model/uploadjob.cpp \
+    Services/requestservice.cpp \
+    Services/progressreportservice.cpp \
+    Services/uploadservice.cpp \
+    Lib/tarball.cpp \
+    Widgets/progressbutton.cpp \
+    Widgets/progressbarbutton.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     study.h \
-    participant.h \
-    part.h \
-    step.h \
-    uploadservice.h \
-    progressreportservice.h \
-    progressbutton.h \
-    tarball.h \
-    requestservice.h \
-    webviewservice.h
+    Services/webviewservice.h \
+    Model/step.h \
+    Model/part.h \
+    Model/participant.h \
+    Model/uploadjob.h \
+    Lib/tarball.h \
+    Services/requestservice.h \
+    Services/progressreportservice.h \
+    Services/uploadservice.h \
+    Widgets/progressbutton.h \
+    UI/mainwindow.h \
+    Widgets/progressbarbutton.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    uploadingtoolbarform.ui
 
 RESOURCES += \
     icons.qrc

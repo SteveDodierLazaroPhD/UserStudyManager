@@ -1,4 +1,8 @@
-#include "part.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
+#include "Model/part.h"
 #include <QMetaType>
 #include <iostream>
 

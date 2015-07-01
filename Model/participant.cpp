@@ -1,4 +1,8 @@
-#include "participant.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
+#include "Model/participant.h"
 #include <QCryptographicHash>
 #include <QJsonDocument>
 #include <QJsonObject>

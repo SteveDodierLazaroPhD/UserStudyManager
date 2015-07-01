@@ -1,3 +1,7 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #ifndef STEP_H
 #define STEP_H
 

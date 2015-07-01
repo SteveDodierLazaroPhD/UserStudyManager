@@ -12,7 +12,7 @@
 #include <cerrno>
 #include <ctime>
 #include <unistd.h>
-#include "tarball.h"
+#include "Lib/tarball.h"
 #define LOCALNS lindenb::io
 #define TARHEADER static_cast<PosixTarHeader*>(header)
 

@@ -1,12 +1,21 @@
-#include "mainwindow.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #include "ui_mainwindow.h"
+#include "ui_uploadingtoolbarform.h"
+#include "UI/mainwindow.h"
 #include "study.h"
-#include "webviewservice.h"
+#include "Services/progressreportservice.h"
+#include "Services/requestservice.h"
+#include "Services/uploadservice.h"
+#include "Services/webviewservice.h"
 #include <iostream>
 #include <QProcess>
 #include <QTimer>
 #include <QDesktopServices>
 #include <QStandardPaths>
+#include <QToolButton>
 
 
 using namespace std;
@@ -102,9 +111,16 @@ void MainWindow::showProgressCalcUI()
     ui->progressServiceUI->show();
 }
 
+void MainWindow::showUploadUI()
+{
+    hideAll();
+    ui->uploadServiceUI->show();
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
+    form(new Ui::UploadingToolbarForm),
     ongoingUpload(false)
 {
     StudyUtils *inst  = StudyUtils::getUtils();
@@ -113,8 +129,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->statusBar->hide();
     ui->centralWidget->layout()->addWidget(nm);
-    this->showWebUI();
-    this->loadSettings();
 
     /* Toolbar buttons */
     connect(ui->actionActivityJournal, SIGNAL(triggered()), this, SLOT(launchActivityJournal()));
@@ -126,11 +140,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionUploadData, SIGNAL(triggered()), nm, SLOT(loadUploadPage()));
 
     /* Web manager events */
+    RequestService *request = inst->getRequestService();
     connect(nm, SIGNAL(loadStarted()), this, SLOT(onPageLoadStarted()));
     connect(nm, SIGNAL(loadProgress(int)), ui->progressBar, SLOT(setValue(int)));
     connect(nm, SIGNAL(loadFinished(bool)), this, SLOT(onPageLoaded(bool)));
     connect(nm, SIGNAL(unsupportedStepQueried(Part, Step)), this, SLOT(onUnsupportedStepQueried(Part, Step)));
     connect(nm, SIGNAL(reportProgressRequested(const QString &)), this, SLOT(onProgressReportQueried(QString)));
+    connect(nm, SIGNAL(uploadJobActionRequested(const QString &)), this, SLOT(onUploadJobActionRequested(QString)));
 
     /* Progress report service - progress calculation */
     ProgressReportService *progress = inst->getProgressReportService();
@@ -145,38 +161,51 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(progress, SIGNAL(startingPackaging(Part,Step)), this, SLOT(onPackagingStarting(Part,Step)));
     connect(progress, SIGNAL(targetForPackaging(qint64,QString)), this, SLOT(onPackagingTargetElicited(qint64,QString)));
     connect(progress, SIGNAL(stepPackaging(qint64,QString,qint64)), this, SLOT(onPackagingStep(qint64,QString,qint64)));
-    connect(progress, SIGNAL(finishedPackaging(Part,Step,QString,qint64)), this, SLOT(onPackagingSuccess(Part,Step,QString,qint64)));
+    connect(progress, SIGNAL(finishedPackaging(Part,Step,QString,qint64,QString)), this, SLOT(onPackagingSuccess(Part,Step,QString,qint64,QString)));
     connect(progress, SIGNAL(invalidPackagingRequest(QString)), this, SLOT(onPackagingFailure(QString)));
     connect(ui->progressGoToUploadButton, SIGNAL(clicked(Part,Step)), nm, SLOT(loadUploadPage(Part,Step)));
 
-
-
-
-
     connect(ui->buttonUIButton, SIGNAL(clicked()), this, SLOT(onLoadWebsiteButtonClicked()));
 
-    /* Upload service */
-
-    UploadService *upload = inst->getUploadService();
-    connect(upload, SIGNAL(uploadStarted()), this, SLOT(onUploadStart()));
-    connect(upload, SIGNAL(uploadFinished()), this, SLOT(onUploadFinished()));
+    /* Job erasing TODO */
     ui->progressWarningEraseJob->setVisible(false);
-    //TODO    connect(upload, SIGNAL(....))
+    //TODO    connect uploadStarted/Finished to a userSettings var indicating upload status and existence of job
+    //TODO    initialise based on whether userSettings indicate existence of job
+    //TODO    ensure, when creating an archive, that the requestService cancels the existing job towards the server
+
+
+    /* Upload progress bar in the toolbar */
+    QWidget* spacer = new QWidget();
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    ui->mainToolBar->addWidget(spacer);
+
+    QWidget *toolbarUploadButtonPlacerholder = new QWidget(ui->mainToolBar);
+    form->setupUi(toolbarUploadButtonPlacerholder);
+    ui->mainToolBar->addWidget(toolbarUploadButtonPlacerholder);
+    form->pushButton->hide();
+    form->progressBar->hide();
+    connect(request, SIGNAL(uploadStarted(Part,Step)), this, SLOT(onUploadStarted(Part,Step)));
+    connect(request, SIGNAL(uploadParametersSet(Part,Step,qint64)), this, SLOT(onUploadTargetSet(Part,Step,qint64)));
+    connect(request, SIGNAL(uploadStep(Part,Step,qint64)), this, SLOT(onUploadStep(Part,Step,qint64)));
+    connect(request, SIGNAL(uploadSucceeded(Part,Step)), this, SLOT(onUploadSucceeded(Part,Step)));
+    connect(request, SIGNAL(uploadFailed(Part,Step,QString)), this, SLOT(onUploadFailed(Part,Step,QString)));
+
+    connect(form->pushButton, SIGNAL(clicked(bool)), this, SLOT(onShowUploadButtonClicked()));
 
     connect(inst, SIGNAL(onLoginStatusChanged(bool)), ui->actionContact, SLOT(setEnabled(bool)));
     connect(inst, SIGNAL(onLoginStatusChanged(bool)), ui->actionUploadData, SLOT(setEnabled(bool)));
     connect(inst, SIGNAL(onLoginStatusChanged(bool)), ui->actionPrepareUpload, SLOT(setEnabled(bool)));
     connect(inst, SIGNAL(onLoginStatusChanged(bool)), ui->actionStatus, SLOT(setEnabled(bool)));
+
+    this->showWebUI();
+    this->loadSettings();
+
     ui->actionContact->setEnabled(inst->isLoggedIn());
     ui->actionUploadData->setEnabled(inst->isLoggedIn());
     ui->actionPrepareUpload->setEnabled(inst->isLoggedIn());
     ui->actionStatus->setEnabled(inst->isLoggedIn());
 
     QDesktopServices::setUrlHandler(APPS_SCHEME, this, "launchUrl");
-
-    //TODO finish fixing connects
-    //TODO setSensitiveFalse, connect to loggedIn signal and loggedOut signal.
-
 }
 
 MainWindow::~MainWindow()
@@ -194,11 +223,14 @@ void MainWindow::onPageLoadStarted()
     ui->progressBar->show();
 }
 
-void MainWindow::onProgressReportQueried(const QString &content)
+void MainWindow::onProgressReportQueried(const QString &)
 {
-    ProgressReportService *report = StudyUtils::getUtils()->getProgressReportService();
-    report->processReportRequest(content);
     this->showProgressCalcUI();
+}
+
+void MainWindow::onUploadJobActionRequested(const QString &)
+{
+    this->showUploadUI();
 }
 
 void MainWindow::onReportStarting(const Part &part, const Step &step)//TODO , const int opCount)
@@ -305,7 +337,7 @@ void MainWindow::onPackagingStep(const qint64 &filesChecked, const QString &next
         ui->progressArchiveStatusLabel->setText(QString("<i>Archiving %1...<i>").arg(nextFile));
 }
 
-void MainWindow::onPackagingSuccess(const Part &part, const Step &step, const QString &filename, const qint64 &fileSize)
+void MainWindow::onPackagingSuccess(const Part &part, const Step &step, const QString &filename, const qint64 &fileSize, const QString &/*checksum*/)
 {
     ui->progressGoToUploadButton->setCurrentPart(part);
     ui->progressGoToUploadButton->setCurrentStep(step);
@@ -343,21 +375,69 @@ void MainWindow::onUnsupportedStepQueried(Part /*part*/, Step step)
     ui->buttonUILabel->setText(step.getMustDoLabel());
 }
 
-void MainWindow::onUploadStart()
+void MainWindow::onUploadStarted(const Part &part, const Step &step)
 {
     ongoingUpload = true;
-    setToolbarEnabled();
+    uploadPart = part;
+    uploadStep = step;
+    form->pushButton->show();
+    form->progressBar->show();
+    form->progressBar->reset();
+    ui->uploadBar->reset();
+    ui->uploadStatusLabel->setText("<i>currently sending your data...</i>");
+    showUploadUI();
+
+    //TODO reset the pbar
 }
 
-void MainWindow::onUploadFinished()
+void MainWindow::onUploadTargetSet(const Part &part, const Step &step, const qint64 &expectedSize)
+{
+    if (uploadPart == part && uploadStep == step)
+    {
+        form->progressBar->setMaximum(expectedSize);
+        ui->uploadBar->setMaximum(expectedSize);
+    }
+}
+
+void MainWindow::onUploadStep(const Part &part, const Step &step, const qint64 &sentSize)
+{
+    if (uploadPart == part && uploadStep == step)
+    {
+        form->progressBar->setValue(sentSize);
+        ui->uploadBar->setValue(sentSize);
+    }
+}
+
+void MainWindow::finishUpload()
 {
     ongoingUpload = false;
-    setToolbarEnabled();
+    uploadPart = Part::INVALID;
+    uploadStep = Step::INVALID;
+    form->pushButton->hide();
+    form->progressBar->hide();
 }
 
-void MainWindow::setToolbarEnabled()
+void MainWindow::onUploadSucceeded(const Part &part, const Step &step)
 {
-    ui->mainToolBar->setEnabled(!ongoingUpload);
+    if (uploadPart == part && uploadStep == step)
+    {
+        finishUpload();
+        ui->uploadStatusLabel->setText("<i>Done!</i>");
+    }
+}
+
+void MainWindow::onUploadFailed(const Part &part, const Step &step, const QString &errMsg)
+{
+    if (uploadPart == part && uploadStep == step)
+    {
+        finishUpload();
+        ui->uploadStatusLabel->setText(QString("<span style=\" font-weight:600; color:#ff2424;\">Upload interrupted: %1</span>").arg(errMsg));
+    }
+}
+
+void MainWindow::onShowUploadButtonClicked()
+{
+    showWebUI();
 }
 
 void MainWindow::onLoadWebsiteButtonClicked()

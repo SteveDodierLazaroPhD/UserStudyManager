@@ -1,10 +1,14 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #ifndef NETWORKMANAGER_H
 #define NETWORKMANAGER_H
 
+#include "Model/participant.h"
 #include <QWebView>
 #include <QObject>
 #include <QList>
-#include "participant.h"
 
 struct URLParts {
     QString route;
@@ -36,6 +40,8 @@ public:
     void load(const QNetworkRequest &request,
               QNetworkAccessManager::Operation operation = QNetworkAccessManager::GetOperation,
               const QByteArray &body = QByteArray());
+
+    void setCookieJar(QNetworkCookieJar *jar);
 
 protected:
 //    QList<QUrl> getCurrentPageInternalLinks() const;
@@ -117,6 +123,12 @@ signals:
      * unintelligible JS in the web view.
      */
     void unsupportedServerAPIQueried(QString id, QString description);
+
+    /**
+     * @brief uploadJobActionRequested
+     * @param content
+     */
+    void uploadJobActionRequested(const QString &content);
 
     /**
      * @brief reportProgressRequested TODO

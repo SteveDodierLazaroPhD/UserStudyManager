@@ -1,9 +1,18 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #ifndef UCLPROGRESSREPORTMANAGER_H
 #define UCLPROGRESSREPORTMANAGER_H
 
+#include "Model/part.h"
+#include "Model/step.h"
 #include <QObject>
-#include "part.h"
-#include "step.h"
+
+#define DAY_IN_MSEC  86400000
+#define HOUR_IN_MSEC  3600000
+#define MIN_IN_MSEC     60000
+#define SEC_IN_MSEC      1000
 
 class ProgressReportService : public QObject
 {
@@ -35,7 +44,7 @@ signals:
     void startingPackaging(const Part &, const Step &);
     void targetForPackaging(const qint64 &target, const QString &nextFile);
     void stepPackaging(const qint64 &step, const QString &nextFile, const qint64 &tmpSize);
-    void finishedPackaging(const Part &, const Step &, const QString &filePath, const qint64 &fileSize);
+    void finishedPackaging(const Part &, const Step &, const QString &filePath, const qint64 &fileSize, const QString &checksum);
     void invalidPackagingRequest(const QString &msg);
 };
 

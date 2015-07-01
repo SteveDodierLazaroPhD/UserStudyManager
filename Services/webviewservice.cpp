@@ -1,6 +1,10 @@
-#include "webviewservice.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #include "study.h"
-#include "participant.h"
+#include "Model/participant.h"
+#include "Services/webviewservice.h"
 #include <iostream>
 #include <QDesktopServices>
 #include <QWebFrame>
@@ -11,6 +15,7 @@
 #include <QJsonParseError>
 #include <QProcess>
 #include <QStandardPaths>
+#include <QNetworkRequest>
 
 using namespace std;
 
@@ -34,7 +39,7 @@ URLParts WebViewService::parseUrl(const QUrl &url)
     /* General case: parsing the url */
     else
     {
-        QStringList    bits = str.split("/");
+        QStringList bits = str.split("/");
 
         /* Authenticated space */
         int partIndex = 0;
@@ -93,6 +98,17 @@ void WebViewService::load(const QNetworkRequest &request,
     cout << "Loading a network request: " << qPrintable(request.url().toDisplayString()) << endl;
     cout << "test cpx" << endl;
     QWebView::load(request, operation, body);
+}
+
+void WebViewService::setCookieJar(QNetworkCookieJar *jar)
+{
+    QWebPage *currentPage = this->page();
+    if (!currentPage)
+        return;
+    QNetworkAccessManager *mgr = currentPage->networkAccessManager();
+    if (!mgr)
+        return;
+    mgr->setCookieJar(jar);
 }
 
 //QList<QUrl> UCLWebManager::getCurrentPageInternalLinks() const
@@ -269,7 +285,6 @@ void WebViewService::onPageLoaded(const bool success)
         this->onStatus();
     }
 
-
     /* AppPartController::showStatusAction() */
     else if (parts.route == "showstatus") { /* nothing to do */ }
     /* AppPartController::uploadAction() */
@@ -279,11 +294,11 @@ void WebViewService::onPageLoaded(const bool success)
     /* AppPartController::informationAction() */
     else if (parts.route == "information") { /* nothing to do */ }
 
-
     /* AppPartController::uploadingAction() */
     else if (parts.route == "uploading")
     {
-        //TODO
+        QString content = this->page()->mainFrame()->toPlainText();
+        emit uploadJobActionRequested(content);
     }
     /* AppPartController::uploadResetAction() */
     else if (parts.route == "uploadreset")

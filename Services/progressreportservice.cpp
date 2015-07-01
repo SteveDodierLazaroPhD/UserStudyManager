@@ -1,26 +1,22 @@
-#include "progressreportservice.h"
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
+#include "study.h"
+#include "Lib/tarball.h"
+#include "Services/progressreportservice.h"
 
 #include <QtConcurrent>
 #include <QStandardPaths>
-
 #include <QZeitgeist/QZeitgeist>
 #include <QZeitgeist/Log>
 #include <QtDBus/QDBusPendingReply>
-
 #include <QJsonValue>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-
 #include <iostream>
 #include <fstream>
-#include "study.h"
-#include "tarball.h"
-
-#define DAY_IN_MSEC  86400000
-#define HOUR_IN_MSEC  3600000
-#define MIN_IN_MSEC     60000
-#define SEC_IN_MSEC      1000
 
 using namespace std;
 
@@ -190,9 +186,21 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
 
         emit stepPackaging(k+1, targets.value(k+1), fileSize);
     }
-
     archive.finish();
-    emit finishedPackaging(part, step, archivePath, fileSize);
+    fileSize = archiveInfo.size();
+
+    QString md5sum;
+    QFile f(archivePath);
+    if (f.open(QFile::ReadOnly))
+    {
+        QCryptographicHash hash(QCryptographicHash::Md5);
+        if (hash.addData(&f))
+        {
+            md5sum = QString(hash.result().toHex());
+        }
+    }
+
+    emit finishedPackaging(part, step, archivePath, fileSize, md5sum);
 }
 
 bool ProgressReportService::processPackageArchiveRequest(const Part &part, const Step &step)

@@ -1,3 +1,7 @@
+/*
+ * 2015 © Steve Dodier-Lazaro <sidnioulz@gmail.com>
+ * Under the GNU Affero GPL3 License
+ */
 #include "study.h"
 #include <iostream>
 #include <QJsonArray>
@@ -5,6 +9,7 @@
 #include <QRegularExpression>
 #include <QSettings>
 #include <QUrl>
+#include <QMutexLocker>
 
 using namespace std;
 
@@ -15,12 +20,14 @@ StudyUtils *StudyUtils::instance = NULL;
 StudyUtils::StudyUtils() :
     participant(NULL),
     loggedIn(false),
+    jarjarbinks(new QNetworkCookieJar()),
     webview(new WebViewService()),
     progressReport(new ProgressReportService()),
     upload(new UploadService()),
-    request(new RequestService()),
+    request(new RequestService(webview)),
     globalSettings(QSettings::SystemScope, "UCL", STUDY_ID),
-    userSettings(QSettings::UserScope, "UCL", STUDY_ID)
+    userSettings(QSettings::UserScope, "UCL", STUDY_ID),
+    settingsMutex()
 {
     initMaxPart();
     initPartStepOrder();
@@ -29,8 +36,15 @@ StudyUtils::StudyUtils() :
 
     connect(progressReport, SIGNAL(finishedProgressCalculation(Part,Step,qint64)), this, SLOT(saveCurrentProgress(Part,Step,qint64)));
     connect(progressReport, SIGNAL(finishedProgressCalculation(Part,Step,qint64)), request, SLOT(sendProgressReportRequest(Part,Step,qint64)));
+    connect(progressReport, SIGNAL(finishedPackaging(Part,Step,QString,qint64,QString)), this, SLOT(saveUploadableArchive(Part,Step,QString,qint64,QString)));
 
-    connect(progressReport, SIGNAL(finishedPackaging(Part,Step,QString,qint64)), this, SLOT(saveUploadableArchive(Part,Step,QString,qint64)));
+    connect(webview, SIGNAL(reportProgressRequested(const QString &)), progressReport, SLOT(processReportRequest(QString)));
+    connect(webview, SIGNAL(uploadJobActionRequested(const QString &)), request, SLOT(dispatchUploadMessage(QString)));
+
+    webview->setCookieJar(jarjarbinks);
+    jarjarbinks->setParent(nullptr);
+    request->getManager().setCookieJar(jarjarbinks);
+    jarjarbinks->setParent(nullptr);
 }
 
 StudyUtils::~StudyUtils()
@@ -44,6 +58,7 @@ StudyUtils::~StudyUtils()
     delete upload;
     delete progressReport;
     delete webview;
+    delete jarjarbinks;
 }
 
 void StudyUtils::initMaxPart()
@@ -93,6 +108,7 @@ void StudyUtils::initPartStepOrder()
 
 void StudyUtils::registerInstall(const Part &part)
 {
+    QMutexLocker locker(&settingsMutex);
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
     userSettings.setValue("startDate", QDate::currentDate().toString(DATE_FORMAT));
     userSettings.endGroup();
@@ -101,6 +117,7 @@ void StudyUtils::registerInstall(const Part &part)
 
 QDate StudyUtils::getInstallDate(const Part &part)
 {
+    QMutexLocker locker(&settingsMutex);
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
     QDate date = userSettings.value("startDate", QDate::currentDate()).toDate();
     userSettings.endGroup();
@@ -109,6 +126,7 @@ QDate StudyUtils::getInstallDate(const Part &part)
 
 qint64 StudyUtils::getMinQualifyingProgress(const Part &part, const Step &step)
 {
+    QMutexLocker locker(&settingsMutex);
     globalSettings.beginGroup(QString("Part%1").arg(part.toString()));
     globalSettings.beginGroup(QString("%1").arg(step.toString()));
 
@@ -125,6 +143,7 @@ qint64 StudyUtils::getMinQualifyingProgress(const Part &part, const Step &step)
 
 qint64 StudyUtils::getCurrentProgress(const Part &part, const Step &step)
 {
+    QMutexLocker locker(&settingsMutex);
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
     userSettings.beginGroup(QString("%1").arg(step.toString()));
 
@@ -141,23 +160,64 @@ qint64 StudyUtils::getCurrentProgress(const Part &part, const Step &step)
 
 void StudyUtils::saveCurrentProgress(const Part &part, const Step &step, const qint64 &loggedDays)
 {
+    QMutexLocker locker(&settingsMutex);
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
     userSettings.beginGroup(QString("%1").arg(step.toString()));
-
     userSettings.setValue("currentProgress", loggedDays);
-
     userSettings.endGroup();
     userSettings.endGroup();
 }
 
-void StudyUtils::saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize)
+qint64 StudyUtils::getUploadableArchiveSize(const Part &part, const Step &step)
 {
+    QMutexLocker locker(&settingsMutex);
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
     userSettings.beginGroup(QString("%1").arg(step.toString()));
 
-    userSettings.setValue("uplodableArchivePath", filePath);
-    userSettings.setValue("uplodableArchiveSize", fileSize);
+    bool ok = false;
+    qint64 size = userSettings.value("archiveSize", 0).toLongLong(&ok);
+    if(!ok)
+        size = 0;
 
+    userSettings.endGroup();
+    userSettings.endGroup();
+
+    return size;
+}
+
+QString StudyUtils::getUploadableArchivePath(const Part &part, const Step &step)
+{
+    QMutexLocker locker(&settingsMutex);
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    userSettings.beginGroup(QString("%1").arg(step.toString()));
+    QString name = userSettings.value("archivePath", 0).toString();
+    userSettings.endGroup();
+    userSettings.endGroup();
+
+    return name;
+}
+
+QString StudyUtils::getUploadableArchiveChecksum(const Part &part, const Step &step)
+{
+    QMutexLocker locker(&settingsMutex);
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    userSettings.beginGroup(QString("%1").arg(step.toString()));
+    QString name = userSettings.value("archiveChecksum").toString();
+    userSettings.endGroup();
+    userSettings.endGroup();
+
+    return name;
+}
+
+void StudyUtils::saveUploadableArchive(const Part &part, const Step &step, const QString &filePath, const qint64 &fileSize, const QString &checksum)
+{
+    QMutexLocker locker(&settingsMutex);
+    userSettings.beginGroup(QString("Part%1").arg(part.toString()));
+    userSettings.beginGroup(QString("%1").arg(step.toString()));
+    userSettings.setValue("archivePath", filePath);
+    userSettings.setValue("archiveSize", fileSize);
+    userSettings.setValue("archiveChecksum", checksum);
+    userSettings.sync();
     userSettings.endGroup();
     userSettings.endGroup();
 }
@@ -168,6 +228,7 @@ void StudyUtils::loginFinalize(bool status)
 
     if (loggedIn)
     {
+        QMutexLocker locker(&settingsMutex);
         cout << "Logged in as " << qPrintable(participant->getUsername()) << " (email " << qPrintable(participant->getEmail()) << ")." << endl;
         userSettings.setValue("lastEmail", participant->getEmail());
     }
