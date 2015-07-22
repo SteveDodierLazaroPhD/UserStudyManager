@@ -361,7 +361,7 @@ void MainWindow::onPackagingSuccess(const Part &part, const Step &step, const QS
     ui->progressGoToUploadButton->setCurrentPart(part);
     ui->progressGoToUploadButton->setCurrentStep(step);
     ui->progressGoToUploadButton->setEnabled(true);
-    ui->progressArchiveBar->setValue(ui->progressDayBar->maximum());
+    ui->progressArchiveBar->setValue(ui->progressArchiveBar->maximum());
     ui->progressArchiveSize->setText(QString("<i>%1...</i>").arg(sizeToHumanReadable(fileSize)));
     ui->progressDayStatusLabel->setText(QString("<i>Archive %1 created successfully!</i>").arg(filename));
 }
