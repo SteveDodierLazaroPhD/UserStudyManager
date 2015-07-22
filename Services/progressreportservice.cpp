@@ -133,6 +133,7 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
     }
 
     QStringList nameFilter("*.log.gz");
+    nameFilter.append("*deletions.log");
     nameFilter.append("activity.sqlite");
     QDir dir(dirPath);
     QStringList targets = dir.entryList(nameFilter);
