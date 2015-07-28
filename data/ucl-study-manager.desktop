@@ -1,0 +1,11 @@
+[Desktop Entry]
+_Name=ucl-study-manager
+_GenericName=Research Study Application
+_Comment=Upload your data to UCL
+Exec=ucl-study-manager
+Terminal=false
+Type=Application
+StartupNotify=true
+Icon=ucl-study-manager
+Categories=GTK;Science;
+DBusActivatable=false
