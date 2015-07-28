@@ -247,7 +247,7 @@ void RequestService::sendUploadJobParameters(const QJsonObject &jsonObj)
         job.setObtainedSize(0);
 
     QJsonObject jsonToSend;
-    jsonToSend.insert("Uploading", "JobParameters");
+    jsonToSend.insert("Uploading", QJsonValue(QString("JobParameters")));
     jsonToSend.insert("UploadJob", job.toJson());
 
     QUrl url(QString(APP_BASE) + part.toString()+"/uploading?Uploading=JobParameters");
