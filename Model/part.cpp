@@ -115,7 +115,7 @@ bool Part::hasReached(const Step &step, const Step &threshold) const
 
 bool Part::isBeyond(const Step &step, const Step &threshold) const
 {
-    std::cout << "This part has  " << steps.size() << " steps registered." << std::endl;
+    //std::cout << "This part has  " << steps.size() << " steps registered." << std::endl;
     QList<Step>::ConstIterator it = steps.constBegin();
     while (it != steps.constEnd())
     {
@@ -123,6 +123,7 @@ bool Part::isBeyond(const Step &step, const Step &threshold) const
             return false;
         else if (threshold == *it)
             return true;
+        it.operator ++();
     }
 
     return false;
