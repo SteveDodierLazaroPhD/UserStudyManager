@@ -194,12 +194,12 @@ void RequestService::sendUploadContentPacket(const QJsonObject &jsonObj)
             {
                 emit uploadStepError(job.getPart(), job.getStep(), QString("Did not send the expected amount of data (delta %1").arg(errReport["LengthOffset"].toInt()));
             }
-            else if(errReport["HashMismatch"].toBool(false))
+            else if(errReport["HashMismatch"].toBool())
             {
                 emit uploadStepError(job.getPart(), job.getStep(), "Hashes didn't match for these parts");
 
             }
-            else if(errReport["ExpectedSizeOverflow"].toBool(false))
+            else if(errReport["ExpectedSizeOverflow"].toBool())
             {
                 emit uploadStepError(job.getPart(), job.getStep(), "Sent more data than was expected for the whole file");
             }
