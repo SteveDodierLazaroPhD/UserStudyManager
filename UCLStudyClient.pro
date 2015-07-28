@@ -8,7 +8,7 @@ QT       += core gui webkitwidgets dbus concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = UCLStudyClient
+TARGET = ucl-study-manager
 TEMPLATE = app
 CONFIG += c++11
 
