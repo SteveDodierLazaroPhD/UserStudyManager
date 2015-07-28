@@ -8,8 +8,8 @@
 
 #include <QtConcurrent>
 #include <QStandardPaths>
-#include <QZeitgeist/QZeitgeist>
-#include <QZeitgeist/Log>
+#include <QZeitgeist5/QZeitgeist>
+#include <QZeitgeist5/Log>
 #include <QtDBus/QDBusPendingReply>
 #include <QJsonValue>
 #include <QJsonDocument>
