@@ -53,4 +53,4 @@ RESOURCES += \
     icons.qrc
 
 DISTFILES += \
-    data/conf.ini/Configuration
+    data/multitasking.conf
