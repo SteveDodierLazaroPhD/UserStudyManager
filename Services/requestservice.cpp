@@ -95,7 +95,7 @@ void RequestService::sendProgressReportRequest(const Part &part, const Step &ste
         QJsonObject stepProgress = jsonObj["StepProgress"].toObject();
         if (Part::fromString(stepProgress["Part"].toString()) == part ||
             Step::fromName(stepProgress["Step"].toString()) == step ||
-            stepProgress["Progress"].toInt(0) == dayCount)
+            stepProgress["Progress"].toInt() == dayCount)
         {
             emit progressReportSucceeded(part, step, dayCount);
             return;
@@ -190,9 +190,9 @@ void RequestService::sendUploadContentPacket(const QJsonObject &jsonObj)
         QJsonObject errReport = replyObj["ErrorReport"].toObject();
         if(errReport.size() > 0)
         {
-            if(errReport["LengthOffset"].toInt(0))
+            if(errReport["LengthOffset"].toInt())
             {
-                emit uploadStepError(job.getPart(), job.getStep(), QString("Did not send the expected amount of data (delta %1").arg(errReport["LengthOffset"].toInt(0)));
+                emit uploadStepError(job.getPart(), job.getStep(), QString("Did not send the expected amount of data (delta %1").arg(errReport["LengthOffset"].toInt()));
             }
             else if(errReport["HashMismatch"].toBool(false))
             {
