@@ -1,0 +1,25 @@
+Source: ucl-study-manager
+Priority: optional
+Maintainer: Steve Dodier-Lazaro <sidnioulz@gmail.com>
+Build-Depends: debhelper (>= 9),
+               cmake,
+               python2.7,
+               libqt5webkit5-dev,              
+               qtquick1-5-dev,
+               qtscript5-dev,
+               libqzeitgeist5-dev,
+               libqzeitgeist5,
+               libzeitgeist-2.0-dev,
+               python-zeitgeist
+Standards-Version: 3.9.6
+Section: gnome
+Vcs-Bzr: http://code.launchpad.net/~ucl-cs-study-devs/study.cs.ucl-web-clients/multitasking
+Vcs-Browser: http://code.launchpad.net/~ucl-cs-study-devs/study.cs.ucl-web-clients/multitasking
+X-Python-Version: >= 2.6
+
+Package: ucl-study-manager
+Section: gnome
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: The application for managing participation
+ to a UCL field study.
