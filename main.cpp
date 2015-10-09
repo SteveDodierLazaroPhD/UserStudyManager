@@ -22,6 +22,10 @@ int main(int argc, char *argv[])
     myappTranslator.load("study_" + QLocale::system().name());
     a.installTranslator(&myappTranslator);
 
+    // Make absolutely certain that we register at least the starting date for part 1
+    StudyUtils *utils = StudyUtils::getUtils();
+    utils->registerInstall(Part::fromId(1));
+
     MainWindow w;
     w.show();
 

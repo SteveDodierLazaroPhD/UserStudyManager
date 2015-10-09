@@ -110,7 +110,9 @@ void StudyUtils::registerInstall(const Part &part)
 {
     QMutexLocker locker(&settingsMutex);
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
-    userSettings.setValue("startDate", QDate::currentDate().toString(DATE_FORMAT));
+    QDate date = userSettings.value("startDate", QDate()).toDate();
+    if (date.isNull())
+        userSettings.setValue("startDate", QDate::currentDate().toString(DATE_FORMAT));
     userSettings.endGroup();
     userSettings.sync();
 }
