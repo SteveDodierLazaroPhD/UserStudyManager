@@ -1,4 +1,10 @@
-ucl-study-manager (0.1.12) trusty; urgency=medium
+ucl-study-manager (0.1.15) vivid; urgency=medium
+
+  * Making libtar dep explicitly for LP builder
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Sun, 11 Oct 2015 13:13:12 +0100
+
+ucl-study-manager (0.1.13) vivid; urgency=medium
 
   * Now relying on c libtar for archiving (fixes time_t length issues)
 

@@ -4,6 +4,7 @@ Maintainer: Steve Dodier-Lazaro <sidnioulz@gmail.com>
 Build-Depends: debhelper (>= 9),
                cmake,
                python2.7,
+               libtar-dev,
                libqt5webkit5-dev,              
                qtquick1-5-dev,
                qtscript5-dev,
