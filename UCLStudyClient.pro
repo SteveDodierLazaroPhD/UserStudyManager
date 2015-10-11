@@ -12,7 +12,7 @@ TARGET = ucl-study-manager
 TEMPLATE = app
 CONFIG += c++11
 
-LIBS += -lqzeitgeist5
+LIBS += -lqzeitgeist5 -ltar
 
 INCLUDEPATH += ./Widgets/
 

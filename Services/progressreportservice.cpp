@@ -3,7 +3,8 @@
  * Under the GNU Affero GPL3 License
  */
 #include "study.h"
-#include "Lib/tarball.h"
+#include <libtar.h>
+#include <fcntl.h>
 #include "Services/progressreportservice.h"
 
 #include <QtConcurrent>
@@ -166,28 +167,38 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
     /* Build archive */
     qint64 fileSize = 0;
     QString archivePath = dirPath + "/uploadTarget.tar.gz";
-    ofstream ofs(archivePath.toStdString(), ofstream::trunc);
 
-    if (!ofs.is_open())
-    {
-        QString msg = QString("could not create an archive at '%1', the error was: %2").arg(archivePath).arg(strerror(errno));
-        emit invalidPackagingRequest(msg);
-    }
+    TAR *archive;
+    tar_open(&archive, qPrintable(archivePath), NULL, O_WRONLY | O_CREAT, 0644, TAR_GNU);
 
-    lindenb::io::Tar archive(ofs);
+//    ofstream ofs(archivePath.toStdString(), ofstream::trunc);
+
+//    if (!ofs.is_open())
+//    {
+//        QString msg = QString("could not create an archive at '%1', the error was: %2").arg(archivePath).arg(strerror(errno));
+//        emit invalidPackagingRequest(msg);
+//    }
+
+//    lindenb::io::Tar archive(ofs);
     QFileInfo archiveInfo(archivePath);
     archiveInfo.setCaching(false);
     for (int k=0; k<targetCount; ++k)
     {
         QString targetName = targets.at(k);
         QString fullPath = QString("%1/%2").arg(dirPath).arg(targetName);
+        std::cout << "Adding file '" << qPrintable(fullPath) << "' to the archive" << std::endl;
 
-        archive.putFile(qPrintable(fullPath), qPrintable(targetName));
+        tar_append_file(archive, qPrintable(fullPath), qPrintable(targetName));
+//        archive.putFile(qPrintable(fullPath), qPrintable(targetName));
         fileSize = archiveInfo.size();
 
         emit stepPackaging(k+1, targets.value(k+1), fileSize);
     }
-    archive.finish();
+
+    tar_append_eof(archive);
+    tar_close(archive);
+    std::cout << "Archive prepared successfully" << std::endl;
+//    archive.finish();
     fileSize = archiveInfo.size();
 
     QString md5sum;
