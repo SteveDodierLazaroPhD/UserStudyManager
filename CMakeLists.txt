@@ -9,6 +9,8 @@ set(CMAKE_AUTOMOC ON)
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 find_package(Qt5 5.2.0 COMPONENTS Core Concurrent DBus Widgets WebKit WebKitWidgets REQUIRED)
+find_library (tar NAMES tar)
+
 
 set(UCL_STUDY_VERSION_MAJOR 0)
 set(UCL_STUDY_VERSION_MINOR 1)
@@ -74,7 +76,8 @@ qt5_add_resources(ucl_study_manager_RESOURCES_RCC ${ucl_study_manager_RESOURCES}
 
 
 add_executable(ucl-study-manager ${ucl_study_manager_SRCS} ${ucl_UIS_H} ${ucl_study_manager_RESOURCES_RCC} ${ucl_study_manager_HEADERS})
-target_link_libraries(ucl-study-manager qzeitgeist5 ${QT_QTDBUS_LIBRARIES} ${QT_QTGUI_LIBRARIES} ${QDBUS_LDFLAGS})
+target_link_libraries(ucl-study-manager qzeitgeist5 tar ${QT_QTDBUS_LIBRARIES} ${QT_QTGUI_LIBRARIES} ${QDBUS_LDFLAGS})
+
 qt5_use_modules(ucl-study-manager Core DBus Test Concurrent Widgets WebKitWidgets)
 
 install(FILES ${CMAKE_SOURCE_DIR}/data/ucl-study-manager.desktop DESTINATION usr/share/applications/)
