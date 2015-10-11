@@ -1,8 +1,14 @@
-ucl-study-manager (0.1.10) trusty; urgency=medium
+ucl-study-manager (0.1.12) trusty; urgency=medium
 
   * Now relying on c libtar for archiving (fixes time_t length issues)
 
  -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Sun, 11 Sep 2015 11:42:00 +0100
+
+ucl-study-manager (0.1.11) vivid; urgency=medium
+
+  * Adding an extra install registration step for safety
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Fri, 09 Oct 2015 12:47:37 +0100
 
 ucl-study-manager (0.1.9) vivid; urgency=medium
 
