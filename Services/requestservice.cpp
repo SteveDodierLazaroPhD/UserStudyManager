@@ -65,8 +65,12 @@ QString RequestService::postRequest(const QUrl &url, const QByteArray &content, 
 ///* Progress reporting API */
 void RequestService::sendProgressReportRequest(const Part &part, const Step &step, const qint64 &dayCount)
 {
+    std::cout << "Sending progress report now..." << std::endl;
     if (!part.hasReached(step, Step::RUNNING))
+    {
+        std::cout << "Cannot report progress before reaching RUNNING step" << std::endl;
         return;
+    }
 
     QUrl url(QString(APP_BASE) + part.toString()+"/reportprogress");
     QByteArray content = QString("{\"ReportProgress\": {\"Step\": \"%1\", \"Progress\": %2}}")
@@ -74,11 +78,13 @@ void RequestService::sendProgressReportRequest(const Part &part, const Step &ste
             .arg(dayCount)
             .toUtf8();
 
+    std::cout << "Request is: " << qPrintable(content) << std::endl;
     QString error;
     QString reply = postRequest(url, content, "application/json", &error);
 
     if (reply.isEmpty())
     {
+        std::cout << "No reply!" << std::endl;
         emit progressReportFailed(part, step, error);
         return;
     }
@@ -87,11 +93,13 @@ void RequestService::sendProgressReportRequest(const Part &part, const Step &ste
 
     if (jsonObj["ReportProgress"].toString() == "Failure")
     {
+        std::cout << "We failed! " << qPrintable(jsonObj["FailureCause"].toString()) << std::endl;
         emit progressReportFailed(part, step, jsonObj["FailureCause"].toString());
         return;
     }
-    else if (jsonObj["ReportProgress"].toString() == "ReadyForContent")
+    else if (jsonObj["ReportProgress"].toString() == "ReadyData")
     {
+        std::cout << "We succeeded!" << std::endl;
         QJsonObject stepProgress = jsonObj["StepProgress"].toObject();
         if (Part::fromString(stepProgress["Part"].toString()) == part ||
             Step::fromName(stepProgress["Step"].toString()) == step ||
@@ -102,6 +110,7 @@ void RequestService::sendProgressReportRequest(const Part &part, const Step &ste
         }
     }
 
+    std::cout << "We failed in an unexpected way!" << std::endl;
     emit progressReportFailed(part, step, "An unknown error occurred when sending a progress report, please try again.");
 }
 
