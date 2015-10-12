@@ -1,3 +1,9 @@
+ucl-study-manager (0.1.17) vivid; urgency=medium
+
+  * Fixed up CMAKE toolchain to include libtar
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Sun, 11 Oct 2015 14:16:39 +0100
+
 ucl-study-manager (0.1.15) vivid; urgency=medium
 
   * Making libtar dep explicitly for LP builder
