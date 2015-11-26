@@ -67,7 +67,6 @@ QByteArray UploadService::getPacketToUpload(const UploadJob &job)
     QString number = QString("%1").arg(dataLen, 24, 10, QChar('0'));
     QByteArray packet = checksum + UPLOAD_PACKET_SEPARATOR;
     packet += number.toUtf8() + UPLOAD_PACKET_SEPARATOR;
-    std::cout << qPrintable(QString("@@@   ")) << packet.toStdString().c_str() << std::endl;
     packet.append(data, dataLen);
 
     free(data);

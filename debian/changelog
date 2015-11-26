@@ -1,3 +1,9 @@
+ucl-study-manager (0.1.23) trusty; urgency=medium
+
+  * Removing a useless debugging message
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Thu, 26 Nov 2015 13:30:53 +0000
+
 ucl-study-manager (0.1.22) wily; urgency=medium
 
   * No more stack smashing on very large uploads
