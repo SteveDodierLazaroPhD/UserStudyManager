@@ -54,7 +54,7 @@ QString RequestService::postRequest(const QUrl &url, const QByteArray &content, 
     }
 
     qDebug() << "Request to: " << qPrintable(url.toString());
-    qDebug() << "Content: "<< (content.length() > 20000? "Content too long":qPrintable(content));
+    qDebug() << "Content: "<< (content.length() > 20000? "(too long to be printed)":qPrintable(content));
     qDebug() << "Content length: "<< content.length();
     qDebug() << "Reply: " << qPrintable(replyContent);
 
@@ -110,7 +110,7 @@ void RequestService::sendProgressReportRequest(const Part &part, const Step &ste
         }
     }
 
-    std::cout << "We failed in an unexpected way!" << std::endl;
+    std::cerr << "We failed in an unexpected way!" << std::endl;
     emit progressReportFailed(part, step, "An unknown error occurred when sending a progress report, please try again.");
 }
 
@@ -163,69 +163,81 @@ void RequestService::onError(const Part &part, const Step &step, const QString &
 }
 
 //{"Uploading":"ReadyData", "UploadJob":{"Part": 1, "Step": "running", "DayCount": 79, "ExpectedSize": "55449088", "ObtainedSize": "0", "Checksum": "2a19bc337f8d3a2026d8af8ab2365472"}, "Participant":{"LoggedIn":{"Username":"bidulgi","Email":"bidulgi@geomi.com"},"Status":{"Part":1,"Step":"running"}}}
-void RequestService::sendUploadContentPacket(const QJsonObject &jsonObj)
+void RequestService::sendUploadContentPacket(const QJsonObject &initJsonObj)
 {
     StudyUtils *utils = StudyUtils::getUtils();
     UploadService *upload = utils->getUploadService();
-
-    const QJsonObject & jsonJob = jsonObj["UploadJob"].toObject();
-    UploadJob job = UploadJob::fromJson(jsonJob);
-
+    const QJsonObject &initJsonJob = initJsonObj["UploadJob"].toObject();
+    UploadJob job = UploadJob::fromJson(initJsonJob);
     QUrl url(QString(APP_BASE) + job.getPart().toString()+"/uploading?Uploading=Uploading");
-    QByteArray packet = upload->getPacketToUpload(job);
-    if (packet.isEmpty())
-    {
-        emit uploadStepError(job.getPart(), job.getStep(), "Could not open the local archive to send it to the server.");
-        return;
-    }
 
-    QString error;
-    QString reply = postRequest(url, packet, "application/octet-stream", &error);
+    QJsonObject jsonObj = initJsonObj;
+    bool uploading = true;
+    while (uploading)
+    {
+        const QJsonObject &jsonJob = jsonObj["UploadJob"].toObject();
+        job = UploadJob::fromJson(jsonJob);
 
-    if (reply.isEmpty())
-    {
-        emit uploadStepError(job.getPart(), job.getStep(), error);
-        return;
-    }
-
-    QJsonObject replyObj = QJsonDocument::fromJson(reply.toUtf8()).object();
-    if (replyObj["Uploading"].toString() == "Failure")
-    {
-        emit uploadStepError(job.getPart(), job.getStep(), replyObj["FailureCause"].toString());
-        return;
-    }
-    else if (replyObj["Uploading"].toString() == "ReadyData")
-    {
-        QJsonObject errReport = replyObj["ErrorReport"].toObject();
-        if(errReport.size() > 0)
+        QByteArray packet = upload->getPacketToUpload(job);
+        if (packet.isEmpty())
         {
-            if(errReport["LengthOffset"].toInt())
-            {
-                emit uploadStepError(job.getPart(), job.getStep(), QString("Did not send the expected amount of data (delta %1").arg(errReport["LengthOffset"].toInt()));
-            }
-            else if(errReport["HashMismatch"].toBool())
-            {
-                emit uploadStepError(job.getPart(), job.getStep(), "Hashes didn't match for these parts");
+            emit uploadStepError(job.getPart(), job.getStep(), "Could not open the local archive to send it to the server.");
+            return;
+        }
 
-            }
-            else if(errReport["ExpectedSizeOverflow"].toBool())
+        QString error;
+        QString reply = postRequest(url, packet, "application/octet-stream", &error);
+
+        if (reply.isEmpty())
+        {
+            emit uploadStepError(job.getPart(), job.getStep(), error);
+            return;
+        }
+
+        QJsonObject replyObj = QJsonDocument::fromJson(reply.toUtf8()).object();
+        if (replyObj["Uploading"].toString() == "Failure")
+        {
+            emit uploadStepError(job.getPart(), job.getStep(), replyObj["FailureCause"].toString());
+            return;
+        }
+        else if (replyObj["Uploading"].toString() == "ReadyData")
+        {
+            QJsonObject errReport = replyObj["ErrorReport"].toObject();
+            if(errReport.size() > 0)
             {
-                emit uploadStepError(job.getPart(), job.getStep(), "Sent more data than was expected for the whole file");
+                if(errReport["LengthOffset"].toInt())
+                {
+                    emit uploadStepError(job.getPart(), job.getStep(), QString("Did not send the expected amount of data (delta %1").arg(errReport["LengthOffset"].toInt()));
+                }
+                else if(errReport["HashMismatch"].toBool())
+                {
+                    emit uploadStepError(job.getPart(), job.getStep(), "Hashes didn't match for these parts");
+
+                }
+                else if(errReport["ExpectedSizeOverflow"].toBool())
+                {
+                    emit uploadStepError(job.getPart(), job.getStep(), "Sent more data than was expected for the whole file");
+                }
+                return;
             }
+            else
+            {
+                UploadJob replyJob = UploadJob::fromJson(replyObj["UploadJob"].toObject());
+                emit uploadStep(job.getPart(), job.getStep(), replyJob.getObtainedSize());
+                jsonObj = replyObj;
+            }
+        }
+        else if (replyObj["Uploading"].toString() == "Done")
+        {
+            emit uploadSucceeded(job.getPart(), job.getStep());
+            uploading = 0;
         }
         else
         {
-            UploadJob replyJob = UploadJob::fromJson(replyObj["UploadJob"].toObject());
-            emit uploadStep(job.getPart(), job.getStep(), replyJob.getObtainedSize());
-            emit uploadStepSucceeded(reply);
+            emit uploadStepError(job.getPart(), job.getStep(), "An unknown error occurred while uploading your data, please try again.");
+            return;
         }
     }
-    else if (replyObj["Uploading"].toString() == "Done")
-    {
-        emit uploadSucceeded(job.getPart(), job.getStep());
-    }
-    else
-        emit uploadStepError(job.getPart(), job.getStep(), "An unknown error occurred while uploading your data, please try again.");
 }
 
 // {"Uploading":"ReadyJobParameters", "UploadJob":{"Part": 1, "Step": "running", "DayCount": 79, "ExpectedSize": null, "ObtainedSize": 0, "Checksum": null}, "Participant":{"LoggedIn":{"Username":"bidulgi","Email":"bidulgi@geomi.com"},"Status":{"Part":1,"Step":"running"}}}

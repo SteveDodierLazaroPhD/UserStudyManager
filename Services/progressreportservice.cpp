@@ -45,7 +45,7 @@ bool ProgressReportService::processReportRequest(const QString &request)
         // We only have one type of upload, so checking that the user is at least beyond RUNNING is enough.
         if (part.isValid() && step.isValid() && part.hasReached(step, Step::RUNNING))
         {
-            QtConcurrent::run(this, &ProgressReportService::calculateZeitgeistDayCount, part, step);
+            QtConcurrent::run(this, &ProgressReportService::calculateZeitgeistDayCount, part, Step::RUNNING);
             return true;
         }
         else
