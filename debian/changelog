@@ -1,4 +1,4 @@
-ucl-study-manager (0.1.20) trusty; urgency=medium
+ucl-study-manager (0.1.22) wily; urgency=medium
 
   * No more stack smashing on very large uploads
 
