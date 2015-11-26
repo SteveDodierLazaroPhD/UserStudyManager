@@ -1,3 +1,15 @@
+ucl-study-manager (0.1.20) trusty; urgency=medium
+
+  * No more stack smashing on very large uploads
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Thu, 26 Nov 2015 12:36:52 +0000
+
+ucl-study-manager (0.1.19) vivid; urgency=medium
+
+  * Fixed API mismatch in progress report service
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Mon, 12 Oct 2015 03:31:20 +0100
+
 ucl-study-manager (0.1.17) vivid; urgency=medium
 
   * Fixed up CMAKE toolchain to include libtar
