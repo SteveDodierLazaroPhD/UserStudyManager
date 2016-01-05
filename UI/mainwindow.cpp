@@ -285,10 +285,20 @@ void MainWindow::onReportSuccess(const Part &part, const Step &step, const qint6
 {
     ui->progressGoToPackagingButton->setCurrentPart(part);
     ui->progressGoToPackagingButton->setCurrentStep(step);
-    ui->progressGoToPackagingButton->setEnabled(result >= StudyUtils::getUtils()->getMinQualifyingProgress(part, step));
-    ui->progressDayBar->setValue(ui->progressDayBar->maximum());
     ui->daysCollected->setText(QString("%1 days").arg(result));
-    ui->progressDayStatusLabel->setText("<i>Done!</i>");
+
+    if (result >= StudyUtils::getUtils()->getMinQualifyingProgress(part, step))
+    {
+        ui->progressGoToPackagingButton->setEnabled(true);
+        ui->progressDayBar->setValue(ui->progressDayBar->maximum());
+        ui->progressDayStatusLabel->setText("<i>Done!</i>");
+    }
+    else
+    {
+        ui->progressGoToPackagingButton->setEnabled(false);
+        ui->progressDayBar->setValue(ui->progressDayBar->minimum());
+        ui->progressDayStatusLabel->setText("<i>You must collect more data to proceed</i>");
+    }
 }
 
 void MainWindow::onReportRequestFailure(const QString &message)

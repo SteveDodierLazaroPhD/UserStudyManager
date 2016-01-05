@@ -32,6 +32,8 @@ public slots:
 
 protected:
     qint64 calculateZeitgeistDayCount(const Part &, const Step &);
+    void getZeitgeistAndPreloadLogger(const Part &, const Step &);
+    void getZeitgeistAndFirejail(const Part &, const Step &);
     void packageArchive(const Part &, const Step &);
 
 signals:

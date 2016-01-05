@@ -119,11 +119,8 @@ qint64 ProgressReportService::calculateZeitgeistDayCount(const Part &part, const
     return loggedDays;
 }
 
-void ProgressReportService::packageArchive(const Part &part, const Step &step)
+void ProgressReportService::getZeitgeistAndPreloadLogger(const Part &part, const Step &step)
 {
-    //TODO connect upload service to this signal and discard any current progress
-    emit startingPackaging(part, step);
-
     /* List files to package */
     QString dirPath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "zeitgeist", QStandardPaths::LocateDirectory);
     if(dirPath == nullptr || dirPath.isEmpty())
@@ -133,10 +130,10 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
         return;
     }
 
+    QDir dir(dirPath);
     QStringList nameFilter("*.log.gz");
     nameFilter.append("*deletions.log");
     nameFilter.append("activity.sqlite");
-    QDir dir(dirPath);
     QStringList targets = dir.entryList(nameFilter);
     targets.sort(Qt::CaseSensitive);
 
@@ -161,25 +158,18 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
         }
         it++;
     }
+
+
     int targetCount = targets.count();
     emit targetForPackaging(targetCount, targets.value(0));
 
     /* Build archive */
     qint64 fileSize = 0;
-    QString archivePath = dirPath + "/uploadTarget.tar.gz";
+    QString archivePath = dirPath + "/uploadTarget-p" + part.toString() + "-" + step.toString() + ".tar.gz";
 
     TAR *archive;
     tar_open(&archive, qPrintable(archivePath), NULL, O_WRONLY | O_CREAT, 0644, TAR_GNU);
 
-//    ofstream ofs(archivePath.toStdString(), ofstream::trunc);
-
-//    if (!ofs.is_open())
-//    {
-//        QString msg = QString("could not create an archive at '%1', the error was: %2").arg(archivePath).arg(strerror(errno));
-//        emit invalidPackagingRequest(msg);
-//    }
-
-//    lindenb::io::Tar archive(ofs);
     QFileInfo archiveInfo(archivePath);
     archiveInfo.setCaching(false);
     for (int k=0; k<targetCount; ++k)
@@ -189,7 +179,6 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
         std::cout << "Adding file '" << qPrintable(fullPath) << "' to the archive" << std::endl;
 
         tar_append_file(archive, qPrintable(fullPath), qPrintable(targetName));
-//        archive.putFile(qPrintable(fullPath), qPrintable(targetName));
         fileSize = archiveInfo.size();
 
         emit stepPackaging(k+1, targets.value(k+1), fileSize);
@@ -198,7 +187,6 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
     tar_append_eof(archive);
     tar_close(archive);
     std::cout << "Archive prepared successfully" << std::endl;
-//    archive.finish();
     fileSize = archiveInfo.size();
 
     QString md5sum;
@@ -213,6 +201,110 @@ void ProgressReportService::packageArchive(const Part &part, const Step &step)
     }
 
     emit finishedPackaging(part, step, archivePath, fileSize, md5sum);
+}
+
+
+void ProgressReportService::getZeitgeistAndFirejail(const Part &part, const Step &step)
+{
+    //TODO connect upload service to this signal and discard any current progress
+    emit startingPackaging(part, step);
+
+    /* Zeitgeist is and remains the main directory we use to store our data */
+    QString dirPath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "zeitgeist", QStandardPaths::LocateDirectory);
+    if(dirPath == nullptr || dirPath.isEmpty())
+    {
+        QString msg = QString("could not locate files to package for part '%1' and step '%2'").arg(part.toString()).arg(step.toString());
+        emit invalidPackagingRequest(msg);
+        return;
+    }
+
+    /* List files to package from the firejail side */
+    QStringList targets;
+    QString dirPathFj = QStandardPaths::locate(QStandardPaths::GenericDataLocation, "firejail", QStandardPaths::LocateDirectory);
+    if(dirPathFj != nullptr && !dirPathFj.isEmpty())
+    {
+        QStringList nameFilter("*.log");
+        QDir dir(dirPathFj);
+        targets = dir.entryList(nameFilter);
+        targets.sort(Qt::CaseSensitive);
+    }
+
+    /* Filter out files that are too old or too young */
+    QStringList::iterator it = targets.begin();
+    QRegExp dateExp("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+
+    StudyUtils *utils = StudyUtils::getUtils();
+    QDate start = utils->getInstallDate(part);
+    QDate end = QDate::currentDate();
+
+    while (it!= targets.end())
+    {
+        QString log = *it;
+        QString dateStr = log;
+        dateStr.truncate(10);
+        if (dateExp.exactMatch(dateStr))
+        {
+            QDate date = QDate::fromString(dateStr, "yyyy-MM-dd");
+            if (date < start || date > end)
+                targets.erase(it);
+        }
+        it++;
+    }
+
+    int targetCount = targets.count();
+    emit targetForPackaging(targetCount, targets.value(0));
+
+    /* Build archive */
+    qint64 fileSize = 0;
+    QString archivePath = dirPath + "/uploadTarget-p" + part.toString() + "-" + step.toString() + ".tar.gz";
+
+    TAR *archive;
+    tar_open(&archive, qPrintable(archivePath), NULL, O_WRONLY | O_CREAT, 0644, TAR_GNU);
+
+    QFileInfo archiveInfo(archivePath);
+    archiveInfo.setCaching(false);
+    tar_append_file(archive, qPrintable(QString("%1/%2").arg(dirPath).arg("activity.sqlite")), "activity.sqlite");
+    for (int k=0; k<targetCount; ++k)
+    {
+        QString targetName = targets.at(k);
+        QString fullPath = QString("%1/%2").arg(dirPathFj).arg(targetName);
+        std::cout << "Adding file '" << qPrintable(fullPath) << "' to the archive" << std::endl;
+
+        tar_append_file(archive, qPrintable(fullPath), qPrintable(targetName));
+        fileSize = archiveInfo.size();
+
+        emit stepPackaging(k+1, targets.value(k+1), fileSize);
+    }
+
+    tar_append_eof(archive);
+    tar_close(archive);
+    std::cout << "Archive prepared successfully" << std::endl;
+    fileSize = archiveInfo.size();
+
+    QString md5sum;
+    QFile f(archivePath);
+    if (f.open(QFile::ReadOnly))
+    {
+        QCryptographicHash hash(QCryptographicHash::Md5);
+        if (hash.addData(&f))
+        {
+            md5sum = QString(hash.result().toHex());
+        }
+    }
+
+    emit finishedPackaging(part, step, archivePath, fileSize, md5sum);
+}
+
+void ProgressReportService::packageArchive(const Part &part, const Step &step)
+{
+    if (part.getId() == 1)
+    {
+        getZeitgeistAndPreloadLogger(part, step);
+    }
+    else if (part.getId() == 2)
+    {
+        getZeitgeistAndFirejail(part, step);
+    }
 }
 
 bool ProgressReportService::processPackageArchiveRequest(const Part &part, const Step &step)

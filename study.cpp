@@ -80,7 +80,7 @@ void StudyUtils::initPartStepOrder()
     def.append("done");
 
     bool ok = false;
-    int partCount = globalSettings.value("partCount", 1).toUInt(&ok);
+    int partCount = globalSettings.value("partCount", 2).toUInt(&ok);
     if(!ok)
         partCount = 0;
 
@@ -121,8 +121,14 @@ QDate StudyUtils::getInstallDate(const Part &part)
 {
     QMutexLocker locker(&settingsMutex);
     userSettings.beginGroup(QString("Part%1").arg(part.toString()));
-    QDate date = userSettings.value("startDate", QDate::currentDate()).toDate();
+    QDate date = userSettings.value("startDate", QDate()).toDate();
+    if (date.isNull())
+    {
+        userSettings.setValue("startDate", QDate::currentDate().toString(DATE_FORMAT));
+        date = userSettings.value("startDate", QDate::currentDate()).toDate();
+    }
     userSettings.endGroup();
+    userSettings.sync();
     return date;
 }
 
@@ -232,6 +238,7 @@ void StudyUtils::loginFinalize(bool status)
     {
         QMutexLocker locker(&settingsMutex);
         cout << "Logged in as " << qPrintable(participant->getUsername()) << " (email " << qPrintable(participant->getEmail()) << ")." << endl;
+        cout << qPrintable(participant->getPart().toString()) << endl;
         userSettings.setValue("lastEmail", participant->getEmail());
     }
 
