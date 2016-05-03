@@ -94,6 +94,7 @@ void MainWindow::setUploadOngoing(const bool &currentUploadStatus, const Part &p
     }
     else if (!currentUploadStatus && ongoingUpload)
     {
+        ongoingUpload = false;
         uploadPart = Part::INVALID;
         uploadStep = Step::INVALID;
         form->pushButton->hide();

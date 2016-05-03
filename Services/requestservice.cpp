@@ -230,7 +230,7 @@ void RequestService::sendUploadContentPacket(const QJsonObject &initJsonObj)
         else if (replyObj["Uploading"].toString() == "Done")
         {
             emit uploadSucceeded(job.getPart(), job.getStep());
-            uploading = 0;
+            uploading = false;
         }
         else
         {
