@@ -1,3 +1,9 @@
+ucl-study-manager (0.1.27) wily; urgency=medium
+
+  * Wily package
+
+ -- Steve Dodier-Lazaro <sidnioulz@gmail.com>  Tue, 03 May 2016 23:27:52 +0100
+
 ucl-study-manager (0.1.26) vivid; urgency=medium
 
   * Multiple consecutive uploads
